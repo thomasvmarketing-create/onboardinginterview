@@ -1,0 +1,460 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Channel Onboarding Interview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one centered column; a segmented 17-step progress rail on top, one question per screen, a docked footer with Back / save status / Next. Owner gets a responses list instead. */
+:root{
+  --bg:#FAF8F7; --surface:#FFFFFF; --ink:#1C1716; --muted:#6F6461; --line:#E8E1DF;
+  --accent:#C8281C; --accent-ink:#FFFFFF; --soft:#FBE4E1; --soft-ink:#6E1810;
+  --tip-bg:#E9EFFA; --tip-line:#3A5CA6; --tip-ink:#22345E; --ok:#2F7A4B; --warn:#9A6A00;
+  --f-body:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-display:"Instrument Serif",Georgia,"Times New Roman",serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --col:44rem;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141110; --surface:#1D1918; --ink:#F2ECEA; --muted:#A69996; --line:#332C2A;
+  --accent:#EF5448; --accent-ink:#1A0B09; --soft:#371B18; --soft-ink:#F8CEC8;
+  --tip-bg:#1A2234; --tip-line:#809CE2; --tip-ink:#C9D6F5; --ok:#6CC08C; --warn:#E0B44F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141110; --surface:#1D1918; --ink:#F2ECEA; --muted:#A69996; --line:#332C2A;
+  --accent:#EF5448; --accent-ink:#1A0B09; --soft:#371B18; --soft-ink:#F8CEC8;
+  --tip-bg:#1A2234; --tip-line:#809CE2; --tip-ink:#C9D6F5; --ok:#6CC08C; --warn:#E0B44F; color-scheme:dark}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--f-body);-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.label{font:500 .72rem/1.2 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.label.red{color:var(--accent)}
+
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar-in{max-width:64rem;margin:0 auto;padding:.9rem 16px;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.mark{display:flex;flex-direction:column;gap:.3rem;margin-right:auto}
+.mark b{font:400 1.35rem/1 var(--f-display)}
+.rail{max-width:64rem;margin:0 auto;padding:0 16px .8rem;display:grid;grid-template-columns:repeat(17,minmax(0,1fr));gap:4px}
+.rail button{height:6px;border:0;border-radius:3px;background:var(--line);padding:0;cursor:pointer}
+.rail button.done{background:var(--ink);opacity:.35}
+.rail button.cur{background:var(--accent);opacity:1}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.6rem;border-radius:999px;border:1.5px solid var(--ink);background:transparent;padding:.55rem 1.1rem;font-weight:500;font-size:.92rem;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--ink);color:var(--bg)}
+.btn:disabled{opacity:.45;cursor:default;background:transparent;color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);padding:.85rem 1.5rem;font-size:1rem;box-shadow:4px 4px 0 var(--ink)}
+.btn.primary:hover{transform:translate(1px,1px);box-shadow:3px 3px 0 var(--ink)}
+.btn.primary:disabled{box-shadow:none;transform:none;background:var(--accent);color:var(--accent-ink)}
+.btn svg{width:18px;height:18px;flex:none}
+.link{background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:.9rem}
+.link:hover{color:var(--ink)}
+
+main{max-width:64rem;margin:0 auto;padding:0 16px}
+.col{max-width:var(--col);margin:0 auto;padding-block:2.6rem 9rem;display:grid;gap:1.4rem;min-width:0}
+h1.big{font:400 clamp(2.1rem,5vw,3.1rem)/1.06 var(--f-display);margin:0;text-wrap:balance}
+.lede{font-size:1.1rem;margin:0;max-width:60ch}
+.muted{color:var(--muted)}
+.facts{display:flex;flex-wrap:wrap;gap:1rem 2.4rem;padding:1.1rem 0;border-block:1px solid var(--line)}
+.facts div{display:grid;gap:.35rem}
+.facts span:last-child{font-weight:500;font-variant-numeric:tabular-nums}
+.tip{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1.2rem;background:var(--tip-bg);border-left:4px solid var(--tip-line);border-radius:4px 14px 14px 4px;padding:1.1rem 1.3rem;color:var(--tip-ink);font-size:.95rem}
+.tip .label{color:var(--tip-line);padding-top:.25rem}
+.tip p{margin:0}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:1rem}
+.field{display:grid;gap:.45rem;min-width:0}
+.field input{border:1.5px solid var(--line);border-radius:10px;background:var(--surface);padding:.75rem .9rem;width:100%}
+.field input:focus,.answer:focus{border-color:var(--ink);outline:none}
+.talk{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.9rem;align-items:center;text-align:left;width:100%;background:var(--tip-bg);color:var(--tip-ink);border:0;border-left:4px solid var(--tip-line);border-radius:4px 14px 14px 4px;padding:.8rem 1.1rem;cursor:pointer;font-size:.92rem}
+.talk b{display:block;font-weight:600}
+.talk p{margin:.1rem 0 0}
+.talk-ic{width:2.4rem;height:2.4rem;border-radius:50%;background:var(--tip-line);color:var(--bg);display:grid;place-items:center}
+.talk-ic svg{width:18px;height:18px}
+.big-talk{cursor:default;padding:1.1rem 1.3rem}
+.howto{border:1px solid var(--line);border-radius:14px;padding:1.2rem 1.4rem;display:grid;gap:.8rem;background:var(--surface)}
+.howto ol{margin:0;padding-left:1.2rem;display:grid;gap:.45rem}
+.note{border:1px dashed var(--line);border-radius:12px;padding:.85rem 1.05rem;color:var(--muted);font-size:.9rem;margin:0}
+.err{color:var(--accent);font-size:.9rem;margin:0}
+
+.qhead{display:flex;justify-content:space-between;align-items:baseline;gap:1rem}
+.count{font:500 .78rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.q{font:400 clamp(1.8rem,4.2vw,2.5rem)/1.12 var(--f-display);margin:0;text-wrap:balance}
+.help{margin:0;color:var(--muted);max-width:60ch}
+.answer{width:100%;min-height:15rem;resize:vertical;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);padding:1rem 1.1rem;line-height:1.6;font-size:1.04rem}
+
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--line);padding:.8rem 16px calc(.8rem + env(safe-area-inset-bottom,0px))}
+.dock-in{max-width:var(--col);margin:0 auto;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.status{margin-right:auto;font-size:.84rem;color:var(--muted);display:flex;align-items:center;gap:.45rem}
+.status i{width:.5rem;height:.5rem;border-radius:50%;background:var(--muted)}
+.status.ok i{background:var(--ok)}
+.status.local i{background:var(--warn)}
+.status.saving i{background:var(--accent);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+
+.review{list-style:none;margin:0;padding:0;display:grid}
+.review li{display:grid;gap:.5rem;padding:1.2rem 0;border-top:1px solid var(--line);min-width:0}
+.review li:last-child{border-bottom:1px solid var(--line)}
+.rq{display:flex;justify-content:space-between;gap:1rem;align-items:baseline}
+.rq b{font-weight:600}
+.ra{white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.chip{display:inline-block;font:500 .68rem/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;border-radius:999px;padding:.35rem .6rem;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.red{background:var(--soft);color:var(--soft-ink);border-color:transparent}
+.chip.ok{color:var(--ok);border-color:currentColor}
+.actions{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center}
+
+.table{border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.trow{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) 7rem 8.5rem;gap:1rem;align-items:center;padding:.95rem 1.1rem;border-top:1px solid var(--line);width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;cursor:pointer}
+.trow:first-child{border-top:0}
+.trow:hover{background:var(--bg)}
+.trow.head{cursor:default;background:none}
+.trow b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trow small{color:var(--muted);font-size:.84rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.num{font-variant-numeric:tabular-nums}
+.empty{padding:2rem 1.2rem;color:var(--muted);text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(5.5rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:.6rem 1rem;border-radius:999px;font-size:.88rem;z-index:20}
+
+@media (max-width:640px){
+  .trow{grid-template-columns:minmax(0,1fr) auto}
+  .trow .hide-sm{display:none}
+  .tip{grid-template-columns:minmax(0,1fr);gap:.4rem}
+  .answer{min-height:12rem}
+  .rail{gap:3px}
+  .dock-in{gap:.6rem}
+  .dock-in .status{flex-basis:100%}
+  .dock-in .btn{flex:1}
+  .dock-in .btn.primary{padding:.7rem 1rem}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div id="app"></div>
+<script>
+(function(){
+"use strict";
+var QUESTIONS=[
+ ["What is your main industry or niche?","Be as specific as you can. “Real estate” is broad; “short-term rental investing for people with full-time jobs” is specific."],
+ ["Why do you want to do YouTube?","What would make it worth it for you a year from now?"],
+ ["Who is your target audience? (Age, location, occupation, etc.)","Describe the people you most want watching, and the best customers you have today."],
+ ["Who do you want to be the #1 biggest channel for?","Finish the sentence: “I want to be the #1 channel for…”"],
+ ["What are their top 3–5 pain points?","What keeps them stuck? Use the words they use on your sales calls."],
+ ["What is their dream result (the transformation)?","Where are they before they find you, and where do they end up?"],
+ ["What is your customer journey, broken down into steps?","From the first time someone hears about you to becoming a client: how they find you, what they buy, and what happens after."],
+ ["What steps must your ideal client take to reach their desired outcome?","The steps they go through to get the result, in order."],
+ ["Explain your story: why you got into this, your personal transformation, how you started the business, the story of growing it (wins and losses), and where you are now.","Take your time here. Your stories often become the best parts of your videos."],
+ ["What makes your voice in your space unique? How are you different from or better than competitors? What are your unfair advantages?",""],
+ ["List all your social proof.","Client results, numbers, names you’re comfortable sharing, press, credentials, milestones."],
+ ["What are 5–10 niche subtopics you want to make content about?",""],
+ ["What are the common myths in your niche?","Things people in your space believe that are wrong or outdated."],
+ ["What are some contrarian takes you have in your industry?","Opinions you hold that most people in your space would disagree with."],
+ ["List any trending topics or figures in your industry right now, or relevant to it.","For example, topics like AI or Claude Code, or figures like Alex Hormozi."],
+ ["Who are some big creators in your niche?","Paste links to their YouTube or other socials, one per line."],
+ ["Is there anything we should NOT include in your scripts?","Topics, words, claims, or anything else to stay away from."]
+];
+var N=QUESTIONS.length;
+function qid(i){return "q"+(i<9?"0":"")+(i+1);}
+var LS="onboarding:v1";
+var app=document.getElementById("app");
+
+var data={answers:{},status:"new",startedAt:null,updatedAt:null,submittedAt:null};
+var ui={view:"welcome",idx:0,saveState:"idle",mode:"pending",owner:false,rows:null,detail:null,err:""};
+var cap={db:null,user:null,downloads:null,ref:null,uid:null};
+
+try{var saved=JSON.parse(localStorage.getItem(LS)||"null");if(saved&&saved.data){data=Object.assign(data,saved.data);ui.idx=Math.min(N-1,saved.idx||0);}}catch(e){}
+
+/* ---------- helpers ---------- */
+function h(tag,attrs,kids){var el=document.createElement(tag);if(attrs)for(var k in attrs){var v=attrs[k];if(v==null||v===false)continue;if(k==="class")el.className=v;else if(k==="text")el.textContent=v;else if(k.slice(0,2)==="on")el.addEventListener(k.slice(2),v);else el.setAttribute(k,v===true?"":v);}
+ (kids||[]).forEach(function(c){if(c==null||c===false)return;el.appendChild(typeof c==="string"?document.createTextNode(c):c);});return el;}
+function svg(d){var s=document.createElementNS("http://www.w3.org/2000/svg","svg");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("fill","none");s.setAttribute("stroke","currentColor");s.setAttribute("stroke-width","2.2");s.setAttribute("stroke-linecap","round");s.setAttribute("stroke-linejoin","round");var p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",d);s.appendChild(p);return s;}
+var ARROW="M5 12h14M13 6l6 6-6 6";
+var MIC="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3";
+var DEV=(function(){var u=navigator.userAgent||"",t=(navigator.maxTouchPoints||0)>1;
+  if(/iPhone|iPad|iPod/.test(u)||(/Macintosh/.test(u)&&t))return "ios";if(/Android/.test(u))return "android";if(/Mac/.test(u))return "mac";if(/Win/.test(u))return "win";return "other";})();
+var TALK={ios:"Tap the microphone on your keyboard and just talk. Tap it again when you\u2019re done.",
+  android:"Tap the microphone on your keyboard and just talk. Tap it again when you\u2019re done.",
+  mac:"Click in the answer box, press the fn key twice (or the microphone key), and talk. Press fn again to stop.",
+  win:"Click in the answer box, press the Windows key + H, and talk. Press it again to stop.",
+  other:"Click in the answer box and use your keyboard\u2019s microphone or your computer\u2019s dictation to talk instead of typing."};
+function toast(m){var t=h("div",{class:"toast",role:"status",text:m});document.body.appendChild(t);setTimeout(function(){t.remove();},2600);}
+function answered(d){d=d||data;var c=0;for(var i=0;i<N;i++){if((d.answers&&d.answers[qid(i)]||"").trim())c++;}return c;}
+function fmtDate(iso){if(!iso)return "";try{return new Date(iso).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});}catch(e){return iso;}}
+function pad(n){return (n<10?"0":"")+n;}
+
+/* ---------- saving ---------- */
+function saveLocal(){try{localStorage.setItem(LS,JSON.stringify({data:data,idx:ui.idx}));}catch(e){}}
+var dirty=false,writing=false,timer=null;
+function touch(){data.updatedAt=new Date().toISOString();if(!data.startedAt)data.startedAt=data.updatedAt;saveLocal();dirty=true;
+  if(ui.mode==="cloud"){setSave("saving");clearTimeout(timer);timer=setTimeout(flush,1200);}else setSave(ui.mode==="local"?"local":"idle");}
+function body(){return {v:2,answers:data.answers,answeredCount:answered(),total:N,status:data.status,startedAt:data.startedAt,updatedAt:data.updatedAt,submittedAt:data.submittedAt};}
+function flush(){
+  clearTimeout(timer);
+  if(ui.mode!=="cloud"||!dirty)return Promise.resolve(true);
+  if(writing){return new Promise(function(r){setTimeout(function(){r(flush());},300);});}
+  writing=true;dirty=false;setSave("saving");
+  return cap.ref.set(body()).then(function(){writing=false;if(!dirty)setSave("ok");return true;})
+  .catch(function(e){writing=false;
+    if(e&&(e.code==="invalid_argument"||e.code==="revoked"||e.code==="not_granted"||e.code==="capability_disabled")){ui.mode="local";setSave("local");render();return false;}
+    dirty=true;setSave("retry");timer=setTimeout(flush,4000);return false;});
+}
+function setSave(s){ui.saveState=s;var el=document.getElementById("status");if(el)paintStatus(el);}
+function paintStatus(el){
+  var map={idle:["","Saved on this device"],ok:["ok","Saved"],saving:["saving","Saving…"],local:["local","Saved on this device only"],retry:["local","Connection issue. Retrying…"]};
+  var s=ui.mode==="pending"&&ui.saveState==="idle"?["","Connecting…"]:(map[ui.saveState]||map.idle);
+  el.className="status "+s[0];el.replaceChildren(h("i"),s[1]);
+}
+window.addEventListener("beforeunload",function(){saveLocal();});
+
+/* ---------- views ---------- */
+function bar(sub,right,withRail){
+  return h("header",{class:"bar"},[
+    h("div",{class:"bar-in"},[h("div",{class:"mark"},[h("b",{text:"Channel Onboarding"}),h("span",{class:"label",text:sub})]),right||null]),
+    withRail?h("nav",{class:"rail","aria-label":"Questions"},QUESTIONS.map(function(q,i){
+      var has=(data.answers[qid(i)]||"").trim();
+      return h("button",{class:(i===ui.idx?"cur":has?"done":""),"aria-label":"Question "+(i+1)+(has?", answered":""),title:"Question "+(i+1),onclick:function(){goTo(i);}});
+    })):null
+  ]);
+}
+function ownerBtn(){return ui.owner?h("button",{class:"btn",onclick:function(){flush();ui.view="responses";render();},text:"Back to dashboard"}):null;}
+
+function renderWelcome(){
+  var resumed=answered()>0;
+  function go(){if(data.status==="new"){data.status="in_progress";touch();}ui.view="question";render();}
+  app.replaceChildren(
+    bar("Before we plan your channel",ownerBtn()),
+    h("main",null,[h("div",{class:"col"},[
+      h("span",{class:"label red",text:resumed?"Welcome back":"Onboarding interview"}),
+      h("h1",{class:"big",text:resumed?"Pick up right where you left off.":"Tell us about your business, in your own words."}),
+      h("p",{class:"lede",text:"17 questions, one at a time. There are no right or wrong answers. Answer the way you’d explain it to a client; how you say things matters to us as much as what you say."}),
+      h("div",{class:"facts"},[
+        h("div",null,[h("span",{class:"label",text:"Questions"}),h("span",{text:"17"})]),
+        h("div",null,[h("span",{class:"label",text:"Time"}),h("span",{text:"30–45 minutes"})]),
+        h("div",null,[h("span",{class:"label",text:"Progress"}),h("span",{text:answered()+" of "+N+" answered"})])
+      ]),
+      h("div",{class:"talk big-talk"},[h("span",{class:"talk-ic"},[svg(MIC)]),h("div",null,[h("b",{text:"Talk, don’t type"}),h("p",{text:TALK[DEV]+(DEV==="mac"||DEV==="win"?" Wispr Flow is another good option if you have it.":"")})])]),
+      modeNote(),
+      h("div",{class:"actions"},[
+        h("button",{class:"btn primary",onclick:go},[resumed?"Continue":"Start the interview",svg(ARROW)]),
+        resumed?h("button",{class:"link",onclick:function(){ui.view="review";render();},text:"Review my answers"}):null
+      ])
+    ])])
+  );
+}
+function modeNote(){
+  if(ui.mode==="local")return h("p",{class:"note",text:"Your answers will be kept on this device as you go. When you finish, you’ll be able to copy or download them to send to us."});
+  if(ui.mode==="cloud")return h("p",{class:"note",text:"Your answers save automatically as you go, so you can stop and come back to this link any time."});
+  return null;
+}
+
+function renderQuestion(){
+  var i=ui.idx,q=QUESTIONS[i],id=qid(i);
+  var ta=h("textarea",{class:"answer",id:"ans-"+id,"aria-labelledby":"qtext",placeholder:"Type or dictate your answer…"});
+  ta.value=data.answers[id]||"";
+  ta.addEventListener("input",function(){data.answers[id]=ta.value;touch();var r=document.querySelector(".rail button:nth-child("+(i+1)+")");if(r)r.className=ta.value.trim()?"cur":"cur";});
+  ta.addEventListener("keydown",function(e){if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)){e.preventDefault();next();}});
+  var status=h("span",{class:"status",id:"status",role:"status"});paintStatus(status);
+  app.replaceChildren(
+    bar("Question "+(i+1)+" of "+N,ownerBtn(),true),
+    h("main",null,[h("div",{class:"col"},[
+      h("div",{class:"qhead"},[h("span",{class:"label red",text:"Question "+pad(i+1)}),h("span",{class:"count",text:pad(i+1)+" / "+N})]),
+      h("h1",{class:"q",id:"qtext",text:q[0]}),
+      q[1]?h("p",{class:"help",text:q[1]}):null,
+      h("button",{class:"talk",type:"button",onclick:function(){ta.focus();}},[h("span",{class:"talk-ic"},[svg(MIC)]),h("div",null,[h("b",{text:"Talk instead of typing"}),h("p",{text:TALK[DEV]})])]),
+      ta,
+      h("p",{class:"muted",style:"margin:0;font-size:.85rem",text:"Not sure yet? Leave it blank and come back to it later."})
+    ])]),
+    h("div",{class:"dock"},[h("div",{class:"dock-in"},[
+      status,
+      h("button",{class:"btn",onclick:back,text:i===0?"Intro":"Back"}),
+      h("button",{class:"btn primary",onclick:next},[i===N-1?"Review answers":"Next",svg(ARROW)])
+    ])])
+  );
+  ta.focus({preventScroll:true});ta.setSelectionRange(ta.value.length,ta.value.length);
+  window.scrollTo(0,0);
+}
+function goTo(i){flush();ui.idx=i;ui.view="question";saveLocal();render();}
+function next(){flush();if(ui.idx<N-1){ui.idx++;saveLocal();render();}else{ui.view="review";render();}}
+function back(){flush();if(ui.idx>0){ui.idx--;saveLocal();render();}else{ui.view="welcome";render();}}
+
+function answerList(d,editable){
+  return h("ol",{class:"review"},QUESTIONS.map(function(q,i){
+    var a=((d.answers||{})[qid(i)]||"").trim();
+    return h("li",null,[
+      h("div",{class:"rq"},[h("b",{text:(i+1)+". "+q[0]}),editable?h("button",{class:"link",onclick:function(){goTo(i);},text:a?"Edit":"Answer"}):null]),
+      a?h("p",{class:"ra",text:a}):h("span",null,[h("span",{class:"chip red",text:"Not answered"})])
+    ]);
+  }));
+}
+function renderReview(){
+  var left=N-answered(),submitted=data.status==="submitted";
+  var status=h("span",{class:"status",id:"status",role:"status"});paintStatus(status);
+  app.replaceChildren(
+    bar("Review your answers",ownerBtn(),true),
+    h("main",null,[h("div",{class:"col"},[
+      h("span",{class:"label red",text:submitted?"Sent":"Almost done"}),
+      h("h1",{class:"big",text:submitted?"Your answers are in.":"Check your answers, then send them."}),
+      h("p",{class:"lede",text:left?("You have "+left+" question"+(left===1?"":"s")+" left blank. You can still send now; we’ll follow up on anything we need."):"Everything’s answered. Edit anything you want to change, then send."}),
+      answerList(data,true)
+    ])]),
+    h("div",{class:"dock"},[h("div",{class:"dock-in"},[
+      status,
+      h("button",{class:"btn",onclick:function(){ui.idx=N-1;ui.view="question";render();},text:"Back"}),
+      h("button",{class:"btn primary",onclick:submit},[submitted?"Send updated answers":"Send my answers",svg(ARROW)])
+    ])])
+  );
+  window.scrollTo(0,0);
+}
+function submit(){
+  data.status="submitted";data.submittedAt=new Date().toISOString();touch();
+  flush().then(function(){ui.view="done";render();});
+}
+function renderDone(){
+  var cloud=ui.mode==="cloud";
+  app.replaceChildren(
+    bar("Thank you",ownerBtn()),
+    h("main",null,[h("div",{class:"col"},[
+      h("span",{class:"label red",text:"Interview complete"}),
+      h("h1",{class:"big",text:"Thank you. That’s everything."}),
+      cloud?h("p",{class:"lede",text:"Your answers have been sent to us. We’ll use them to plan your channel and write scripts that sound like you. If you think of something else, come back to this link and edit your answers any time."})
+           :h("p",{class:"lede",text:"One last step: your answers are saved on this device only. Copy or download them below and send them to us by email or in our chat."}),
+      h("div",{class:"actions"},[
+        h("button",{class:"btn"+(cloud?"":" primary"),onclick:function(){copyText(exportText(data));},text:"Copy my answers"}),
+        cap.downloads?h("button",{class:"btn",onclick:function(){download(data);},text:"Download my answers"}):null,
+        h("button",{class:"link",onclick:function(){ui.view="review";render();},text:"Edit my answers"})
+      ])
+    ])])
+  );
+  window.scrollTo(0,0);
+}
+
+/* ---------- export ---------- */
+function exportText(d,who){
+  var out=["# Onboarding interview"+(who?": "+who:"")];
+  if(d.submittedAt)out.push("Sent: "+fmtDate(d.submittedAt));else if(d.updatedAt)out.push("Last updated: "+fmtDate(d.updatedAt));
+  out.push("");
+  QUESTIONS.forEach(function(q,i){out.push("## "+(i+1)+". "+q[0]);out.push(((d.answers||{})[qid(i)]||"").trim()||"(not answered)");out.push("");});
+  return out.join("\n");
+}
+function copyText(t){
+  var ok=function(){toast("Copied");};
+  var fallback=function(){var ta=h("textarea",{style:"position:fixed;top:0;left:0;opacity:0"});ta.value=t;document.body.appendChild(ta);ta.select();var r=false;try{r=document.execCommand("copy");}catch(e){}ta.remove();toast(r?"Copied":"Copy didn’t work here. Use Download instead.");};
+  try{navigator.clipboard.writeText(t).then(ok,fallback);}catch(e){fallback();}
+}
+function download(d,who){
+  if(!cap.downloads)return;
+  var fn="onboarding-"+((who||"answers").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"client")+".md";
+  cap.downloads.save({filename:fn,data:exportText(d,who)}).then(function(){toast("Saved");},function(){});
+}
+
+/* ---------- owner: responses ---------- */
+var unsub=null;
+function watchResponses(){
+  if(unsub||!cap.db)return;
+  unsub=cap.db.collection("submissions").onSnapshot(function(s){
+    ui.rows=s.docs.map(function(d){var b=d.data()||{};b._id=d.id;return b;}).sort(function(a,b){return (b.updatedAt||"").localeCompare(a.updatedAt||"");});
+    if(ui.view==="responses")render();
+  },function(){ui.rows=ui.rows||[];ui.err="Couldn’t load responses. Reload the page to try again.";if(ui.view==="responses")render();});
+}
+var names={};
+function whoOf(r){var p=names[r._id]||{};return p.name||p.email||("Client "+r._id.slice(-4));}
+function resolveNames(rows){
+  if(!cap.user||!rows||!rows.length)return;
+  cap.user.profiles(rows.map(function(r){return r._id;})).then(function(ps){
+    var changed=false;rows.forEach(function(r){var p=ps[r._id]||{},o=names[r._id],n={name:p.name||"",email:p.email||"",guest:!!p.guest};if(!o||n.name!==o.name||n.email!==o.email)changed=true;names[r._id]=n;});
+    if(changed&&ui.view==="responses")render();
+  }).catch(function(){});
+}
+function niche(r){var a=((r.answers||{}).q01||"").trim().replace(/\s+/g," ");return a.length>70?a.slice(0,68)+"…":a;}
+function renderResponses(){
+  watchResponses();
+  var rows=ui.rows;resolveNames(rows);
+  if(ui.detail){var d=(rows||[]).filter(function(r){return r._id===ui.detail;})[0];if(d)return renderDetail(d);ui.detail=null;}
+  var list;
+  if(rows===null)list=h("div",{class:"empty",text:"Loading interviews…"});
+  else if(!rows.length)list=h("div",{class:"empty",text:"No interviews yet. Once you share this page with a client, their answers show up here while they type."});
+  else list=h("div",{class:"table",role:"list"},[h("div",{class:"trow head"},[h("span",{class:"label",text:"Client"}),h("span",{class:"label hide-sm",text:"Updated"}),h("span",{class:"label hide-sm",text:"Answered"}),h("span",{class:"label",text:"Status"})])].concat(rows.map(function(r){
+    var mine=r._id===cap.uid;
+    return h("button",{class:"trow",role:"listitem",onclick:function(){ui.detail=r._id;render();}},[
+      h("span",{style:"min-width:0"},[h("b",{text:mine?"You (preview)":whoOf(r)}),h("small",{text:niche(r)||"No niche answer yet"})]),
+      h("span",{class:"num hide-sm muted",style:"font-size:.9rem",text:fmtDate(r.updatedAt)}),
+      h("span",{class:"num hide-sm",text:(r.answeredCount||0)+" / "+(r.total||N)}),
+      h("span",null,[r.status==="submitted"?h("span",{class:"chip ok",text:"Sent"}):h("span",{class:"chip",text:"In progress"})])
+    ]);
+  })));
+  var sent=(rows||[]).filter(function(r){return r.status==="submitted"&&r._id!==cap.uid;}).length,prog=(rows||[]).filter(function(r){return r.status!=="submitted"&&r._id!==cap.uid;}).length;
+  app.replaceChildren(
+    bar("Your dashboard",h("button",{class:"btn",onclick:function(){ui.view="welcome";render();},text:"Preview as a client"})),
+    h("main",null,[h("div",{class:"col",style:"padding-bottom:4rem"},[
+      h("span",{class:"label red",text:"Only you see this page"}),
+      h("h1",{class:"big",text:"Client interviews"}),
+      rows&&rows.length?h("div",{class:"facts"},[
+        h("div",null,[h("span",{class:"label",text:"Sent"}),h("span",{text:String(sent)})]),
+        h("div",null,[h("span",{class:"label",text:"In progress"}),h("span",{text:String(prog)})])
+      ]):null,
+      ui.err?h("p",{class:"err",text:ui.err}):null,
+      list,
+      h("section",{class:"howto"},[
+        h("span",{class:"label red",text:"Send this to a client"}),
+        h("ol",null,[
+          h("li",{text:"Open the Share menu at the top of this page."}),
+          h("li",{text:"Add your client’s email and set their access to Editor. That lets their answers save to you. They’ll need a free Claude account."}),
+          h("li",{text:"Send them the link. They only see their own interview, never this dashboard or anyone else’s answers."})
+        ]),
+        h("p",{class:"muted",style:"margin:0;font-size:.9rem",text:"Anyone who opens it with view-only access can still do the interview. Their answers stay on their device, and at the end they copy or download them to send to you."})
+      ])
+    ])])
+  );
+}
+function renderDetail(d){
+  var who=d._id===cap.uid?"You (preview)":whoOf(d),p=names[d._id]||{};
+  app.replaceChildren(
+    bar("Your dashboard",h("button",{class:"btn",onclick:function(){ui.detail=null;render();},text:"All interviews"})),
+    h("main",null,[h("div",{class:"col",style:"padding-bottom:4rem"},[
+      h("span",{class:"label red",text:d.status==="submitted"?"Sent "+fmtDate(d.submittedAt):"In progress · updated "+fmtDate(d.updatedAt)}),
+      h("h1",{class:"big",text:who}),
+      p.email&&p.email!==who?h("p",{class:"lede muted",text:p.email}):null,
+      h("div",{class:"actions"},[
+        h("button",{class:"btn primary",onclick:function(){copyText(exportText(d,who));},text:"Copy all answers"}),
+        cap.downloads?h("button",{class:"btn",onclick:function(){download(d,who);},text:"Download .md"}):null
+      ]),
+      answerList(d,false)
+    ])])
+  );
+  window.scrollTo(0,0);
+}
+
+function render(){
+  var v=ui.view;
+  if(v==="responses"&&ui.owner)return renderResponses();
+  if(v==="question")return renderQuestion();
+  if(v==="review")return renderReview();
+  if(v==="done")return renderDone();
+  return renderWelcome();
+}
+
+/* ---------- boot ---------- */
+render();
+function goLocal(){ui.mode="local";ui.saveState="local";var a=document.activeElement;if(a&&a.tagName==="TEXTAREA")setSave("local");else render();}
+var C=window.claude;
+if(!C||!C.use){goLocal();}
+else Promise.all([C.use("db").catch(function(){return null;}),C.use("user").catch(function(){return null;}),C.use("downloads").catch(function(){return null;})])
+.then(function(r){
+  cap.db=r[0];cap.user=r[1];cap.downloads=r[2];
+  if(!cap.user)return goLocal();
+  return Promise.all([cap.user.id().catch(function(){return null;}),cap.user.isOwner().catch(function(){return false;}),cap.user.can("data.write").catch(function(){return null;})]).then(function(x){
+    cap.uid=x[0];ui.owner=!!x[1];
+    if(!cap.db||!cap.uid||(x[2]===false&&!ui.owner))return goLocal();
+    cap.ref=cap.db.doc("submissions/"+cap.uid);
+    return cap.ref.get().then(function(snap){
+      ui.mode="cloud";
+      if(snap.exists){var b=snap.data()||{};
+        if(!data.updatedAt||(b.updatedAt||"")>=data.updatedAt){data={answers:Object.assign({},b.answers||{}),status:b.status||"in_progress",startedAt:b.startedAt||null,updatedAt:b.updatedAt||null,submittedAt:b.submittedAt||null};saveLocal();ui.saveState="ok";}
+        else{dirty=true;flush();}
+      }else if(data.updatedAt){dirty=true;flush();}
+      else ui.saveState="ok";
+      if(ui.owner&&ui.view==="welcome")ui.view="responses";
+      var a=document.activeElement,keepTyping=a&&a.tagName==="TEXTAREA";
+      if(!keepTyping)render();else setSave(ui.saveState);
+    }).catch(function(){goLocal();});
+  });
+}).catch(goLocal);
+})();
+</script>
+
+</body></html>

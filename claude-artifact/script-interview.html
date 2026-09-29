@@ -1,0 +1,502 @@
+<title>Script Interview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif&family=JetBrains+Mono:wght@500&display=swap">
+<style id="css">
+/* Layout: a single centered reading column that switches between a paged brief, a live interview thread with a docked answer bar, and the finished context pack. */
+:root{
+  --bg:#FAF8F7; --surface:#FFFFFF; --ink:#1C1716; --muted:#6F6461; --line:#E8E1DF;
+  --accent:#C8281C; --accent-ink:#FFFFFF; --answer-bg:#FBE4E1; --answer-ink:#6E1810;
+  --tip-bg:#E9EFFA; --tip-line:#3A5CA6; --tip-ink:#22345E;
+  --ok:#2F7A4B;
+  --f-body:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-display:"Instrument Serif",Georgia,"Times New Roman",serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --col:44rem;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141110; --surface:#1D1918; --ink:#F2ECEA; --muted:#A69996; --line:#332C2A;
+  --accent:#EF5448; --accent-ink:#1A0B09; --answer-bg:#371B18; --answer-ink:#F8CEC8;
+  --tip-bg:#1A2234; --tip-line:#809CE2; --tip-ink:#C9D6F5; --ok:#6CC08C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141110; --surface:#1D1918; --ink:#F2ECEA; --muted:#A69996; --line:#332C2A;
+  --accent:#EF5448; --accent-ink:#1A0B09; --answer-bg:#371B18; --answer-ink:#F8CEC8;
+  --tip-bg:#1A2234; --tip-line:#809CE2; --tip-ink:#C9D6F5; --ok:#6CC08C; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--f-body);-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.label{font:500 .72rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.label.red{color:var(--accent)}
+
+/* top bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar-in{max-width:64rem;margin:0 auto;padding:.9rem 16px;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.mark{display:flex;flex-direction:column;gap:.3rem;margin-right:auto}
+.mark b{font:400 1.35rem/1 var(--f-display);letter-spacing:.01em}
+.bar-title{font-weight:500;font-size:.92rem;color:var(--ink);max-width:28rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.progress{height:3px;background:var(--line);position:relative}
+.progress i{position:absolute;inset:0 auto 0 0;background:var(--accent);transition:width .5s ease}
+
+.btn{display:inline-flex;align-items:center;gap:.6rem;border-radius:999px;border:1.5px solid var(--ink);background:transparent;padding:.55rem 1.1rem;font-weight:500;font-size:.9rem;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--ink);color:var(--bg)}
+.btn:disabled{opacity:.45;cursor:default;background:transparent;color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);padding:.95rem 1.7rem;font-size:1.05rem;box-shadow:4px 4px 0 var(--ink)}
+.btn.primary:hover{transform:translate(1px,1px);box-shadow:3px 3px 0 var(--ink)}
+.btn.primary:disabled{box-shadow:none;transform:none;background:var(--accent);color:var(--accent-ink)}
+.link{background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:.88rem}
+.link:hover{color:var(--ink)}
+
+main{max-width:64rem;margin:0 auto;padding:0 16px}
+
+/* brief deck */
+.deck{display:grid;grid-template-columns:3.5rem minmax(0,1fr) 3.5rem;gap:1rem;align-items:center;padding-block:2.5rem 3rem}
+.arrow{width:3.5rem;height:3.5rem;border-radius:50%;border:1.5px solid var(--ink);background:var(--surface);display:grid;place-items:center;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
+.arrow:disabled{border-color:var(--line);box-shadow:none;cursor:default;color:var(--line)}
+.arrow svg{width:18px;height:18px}
+.slide{max-width:var(--col);margin:0 auto;width:100%;min-width:0}
+.slide-head{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-bottom:1.4rem}
+.count{font:500 .78rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.slide h1{font:400 clamp(2rem,4.6vw,3rem)/1.08 var(--f-display);margin:0 0 1.2rem;text-wrap:balance}
+.slide h2{font:400 1.7rem/1.15 var(--f-display);margin:0 0 1rem;text-wrap:balance}
+.slide p{margin:0 0 1rem;font-size:1.08rem;max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:.5rem 1.6rem;margin:0 0 1.4rem}
+.meta div{display:flex;flex-direction:column;gap:.35rem}
+.meta span:last-child{font-weight:500}
+.tri{list-style:none;padding:0;margin:0 0 1.6rem;display:grid;gap:.85rem}
+.tri li{position:relative;padding-left:1.7rem;font-size:1.08rem}
+.tri li::before{content:"";position:absolute;left:.1rem;top:.5em;border-left:9px solid var(--accent);border-top:6px solid transparent;border-bottom:6px solid transparent}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:1.5rem}
+.split h3{margin:0 0 .8rem}
+.hookq{border-left:3px solid var(--accent);padding:.2rem 0 .2rem 1.2rem;font:400 1.45rem/1.4 var(--f-display);margin:0 0 1.4rem}
+.sections{list-style:none;counter-reset:s;padding:0;margin:0;display:grid;gap:0}
+.sections li{counter-increment:s;display:grid;grid-template-columns:2.4rem minmax(0,1fr);gap:.8rem;padding:.9rem 0;border-top:1px solid var(--line)}
+.sections li:last-child{border-bottom:1px solid var(--line)}
+.sections li::before{content:counter(s,decimal-leading-zero);font:500 .8rem var(--f-mono);color:var(--accent);padding-top:.3rem}
+.sections b{display:block;font-weight:600}
+.sections span{color:var(--muted)}
+.tip{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1.2rem;background:var(--tip-bg);border-left:4px solid var(--tip-line);border-radius:4px 14px 14px 4px;padding:1.2rem 1.4rem;margin:1.8rem 0 2.2rem;color:var(--tip-ink);font-size:.95rem}
+.tip .label{color:var(--tip-line);padding-top:.25rem}
+.tip p{margin:0;font-size:.95rem}
+.start{border-top:1px solid var(--line);padding-top:2rem;display:grid;gap:1.8rem}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:1rem 2rem}
+.facts div{display:grid;grid-template-columns:minmax(0,1fr);gap:.45rem;font-size:.95rem}
+.btn svg{width:18px;height:18px;flex:none}
+.dots{display:flex;gap:.45rem;justify-content:center;margin-top:1rem}
+.dots button{width:.55rem;height:.55rem;border-radius:50%;border:0;background:var(--line);padding:0;cursor:pointer}
+.dots button[aria-current="true"]{background:var(--accent);width:1.6rem;border-radius:999px}
+.notice{border:1px dashed var(--line);border-radius:12px;padding:.9rem 1.1rem;color:var(--muted);font-size:.9rem;margin-top:1rem}
+.owner{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;justify-content:center;padding:0 0 2rem;color:var(--muted);font-size:.88rem}
+.chip{font:500 .7rem var(--f-mono);letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:.3rem .6rem}
+
+/* interview thread */
+.thread{max-width:var(--col);margin:0 auto;padding-block:2.5rem 12rem;display:grid;gap:2.2rem}
+.turn{display:grid;gap:.8rem;min-width:0}
+.turn .body p{margin:0 0 1rem;font-size:1.06rem}
+.turn .body p:last-child{margin-bottom:0}
+.turn .body blockquote{margin:0 0 1rem;border-left:3px solid var(--accent);padding:.1rem 0 .1rem 1.1rem;font:400 1.3rem/1.45 var(--f-display)}
+.answer{background:var(--answer-bg);color:var(--answer-ink);border-left:4px solid var(--accent);border-radius:4px 16px 16px 4px;padding:1.2rem 1.5rem;font-size:1.04rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.thinking{color:var(--muted);font-size:.95rem;display:flex;gap:.6rem;align-items:center}
+.thinking i{width:.45rem;height:.45rem;border-radius:50%;background:var(--accent);animation:pulse 1.2s infinite ease-in-out}
+.thinking i:nth-child(2){animation-delay:.2s}.thinking i:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:1}}
+.err{color:var(--accent);font-size:.92rem}
+.done-card{border:1.5px solid var(--ink);border-radius:16px;padding:1.4rem;display:grid;gap:1rem;background:var(--surface)}
+.done-card p{margin:0}
+
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:6;background:linear-gradient(to top,var(--bg) 70%,transparent);padding:1.4rem 16px calc(1rem + env(safe-area-inset-bottom,0px))}
+.dock-in{max-width:var(--col);margin:0 auto;display:grid;gap:.5rem}
+.composer{display:flex;gap:.7rem;align-items:flex-end}
+.composer textarea{flex:1;min-width:0;resize:none;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);padding:.85rem 1rem;max-height:40vh;line-height:1.5}
+.composer textarea:focus{border-color:var(--ink);outline:none}
+.send{flex:none;width:3.1rem;height:3.1rem;border-radius:50%;border:0;background:var(--ink);color:var(--bg);display:grid;place-items:center;cursor:pointer}
+.send:disabled{opacity:.35;cursor:default}
+.send svg{width:18px;height:18px}
+.hint{font-size:.78rem;color:var(--muted);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+
+/* pack */
+.pack{max-width:var(--col);margin:0 auto;padding-block:2.5rem 4rem}
+.pack-actions{display:flex;flex-wrap:wrap;gap:.7rem;margin:0 0 2rem;align-items:center}
+.doc{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(1.2rem,4vw,2.4rem);overflow-wrap:anywhere}
+.doc h1{font:400 2rem/1.1 var(--f-display);margin:0 0 1rem;text-wrap:balance}
+.doc h2{font:500 .76rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:2rem 0 .9rem}
+.doc h3{font-size:1rem;margin:1.2rem 0 .5rem}
+.doc p{margin:0 0 .8rem}
+.doc ul{margin:0 0 .8rem;padding-left:1.2rem}
+.doc li{margin:.25rem 0}
+.doc blockquote{margin:0 0 .8rem;border-left:3px solid var(--accent);padding-left:1rem;font-style:italic}
+
+/* editor */
+.editor{max-width:var(--col);margin:0 auto;padding-block:2.5rem 4rem;display:grid;gap:1.3rem}
+.editor h1{font:400 2rem/1.1 var(--f-display);margin:0}
+.field{display:grid;gap:.45rem}
+.field input,.field textarea{border:1.5px solid var(--line);border-radius:10px;background:var(--surface);padding:.7rem .85rem;width:100%}
+.field textarea{min-height:6rem;resize:vertical}
+.field small{color:var(--muted);font-size:.8rem}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:1rem}
+.toast{position:fixed;left:50%;bottom:calc(1.5rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:.6rem 1rem;border-radius:999px;font-size:.88rem;z-index:20}
+
+@media (max-width:640px){
+  .deck{grid-template-columns:minmax(0,1fr);padding-block:1.6rem 2rem}
+  .deck>.arrow{display:none}
+  .bar-title{display:none}
+  .tip{grid-template-columns:minmax(0,1fr);gap:.5rem}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div id="app"></div>
+<script type="application/json" id="brief">{"id":"example-arbitrage-200","example":true,"client":"Maya Torres","title":"I Pitched 200 Landlords for Airbnb Arbitrage. Here's What I Learned","concept":"A lessons-learned video built from Maya's real landlord outreach. Each lesson names what she believed going in, what actually happened on the calls, and the one change a new operator should make before their next pitch. The payoff is that the viewer walks away knowing why most landlords say no and what gets a yes.","reference":{"title":"I Made 300 YouTube Videos and Learned This","views":"480K views","note":"Top outlier on its channel, well above the channel median","why":["A big, specific number in the title signals earned experience before the video starts","Every lesson is a short story with a before-and-after, which keeps retention flat through the middle","The creator admits mistakes openly, which makes the advice believable"]},"signal":["Big specific number tied to real reps","Lesson = old belief, what happened, what to do now","Open with the most surprising lesson, not the most basic"],"noise":["The reference creator's jokes and editing style","Their 10-lesson length; use as many lessons as Maya actually has"],"hook":"Two hundred landlords. Most of them hung up, a few of them yelled, and eleven of them signed. Here's what the eleven had in common, and what I'd say differently on call one if I were starting today.","sections":[{"name":"Hook and proof","note":"Maya's numbers: calls made, leases signed, units running now"},{"name":"Lesson 1: the pitch opener","note":"What she said on early calls vs. what works now"},{"name":"Lesson 2: which landlords to call","note":"Property types, owner types, how she finds them"},{"name":"Lesson 3: handling the insurance and liability objection","note":"Exact wording and proof she sends"},{"name":"Lesson 4: the lease terms that got signed","note":"What she offers, what she never gives up"}],"midroll":"After Lesson 2: mention Maya's free landlord call script, one line, then back into the lessons.","endscreen":"How I Furnish an Airbnb Arbitrage Unit for Under $8K (already on the channel)","interviewIntro":"The team has a working outline, but the actual lessons and the way you'd phrase each one is what this interview is for.","covers":["Your real outreach numbers: calls, meetings, signed leases, and how long it took","Each lesson: what you believed at the start, the call or moment that changed it, and what you'd tell a new operator to do this week","Exact words you use with landlords, including your answer to the insurance objection","The end-screen video: whether the furnishing video is the right next step or something else fits better"],"expected":"15-20 minutes. The lessons are the dense part; everything else flows from them.","delivery":"First script draft within 48 hours of your interview."}</script>
+<script id="appjs">
+(function(){
+"use strict";
+var BRIEF=JSON.parse(document.getElementById("brief").textContent);
+var KEY="si:"+BRIEF.id;
+var app=document.getElementById("app");
+var state={view:"brief",slide:0,turns:[],pack:"",busy:false,stage:1,done:false,err:"",ctl:null};
+var cap={sample:null,artifact:null,downloads:null,user:null,ready:false};
+
+function load(){try{var s=JSON.parse(localStorage.getItem(KEY)||"null");if(s){state.turns=s.turns||[];state.pack=s.pack||"";state.stage=s.stage||1;state.done=!!s.done;}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({turns:state.turns,pack:state.pack,stage:state.stage,done:state.done}));}catch(e){}}
+load();
+
+function h(tag,attrs,kids){var el=document.createElement(tag);if(attrs)for(var k in attrs){var v=attrs[k];if(v==null||v===false)continue;if(k==="class")el.className=v;else if(k==="text")el.textContent=v;else if(k.slice(0,2)==="on")el.addEventListener(k.slice(2),v);else el.setAttribute(k,v===true?"":v);}
+  (kids||[]).forEach(function(c){if(c==null||c===false)return;el.appendChild(typeof c==="string"?document.createTextNode(c):c);});return el;}
+function svg(d){var s=document.createElementNS("http://www.w3.org/2000/svg","svg");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("fill","none");s.setAttribute("stroke","currentColor");s.setAttribute("stroke-width","2.2");s.setAttribute("stroke-linecap","round");s.setAttribute("stroke-linejoin","round");var p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",d);s.appendChild(p);return s;}
+function toast(msg){var t=h("div",{class:"toast",role:"status",text:msg});document.body.appendChild(t);setTimeout(function(){t.remove();},2600);}
+
+function stages(){return ["Angle","Hook and proof"].concat(BRIEF.sections.filter(function(s,i){return !(i===0&&/hook/i.test(s.name));}).map(function(s){return s.name;})).concat(["Payoff check","Next step"]);}
+
+/* ---------- top bar ---------- */
+function bar(sub,right){
+  var pct=state.view==="interview"?Math.min(100,Math.round(((state.done?stages().length:state.stage-1)/stages().length)*100)):state.view==="pack"?100:0;
+  return h("header",{class:"bar"},[
+    h("div",{class:"bar-in"},[
+      h("div",{class:"mark"},[h("b",{text:"Script Interview"}),h("span",{class:"label",text:sub})]),
+      state.view!=="brief"?h("span",{class:"bar-title",text:BRIEF.title}):null,
+      right||null
+    ]),
+    state.view==="interview"||state.view==="pack"?h("div",{class:"progress","aria-hidden":"true"},[h("i",{style:"width:"+pct+"%"})]):null
+  ]);
+}
+
+/* ---------- brief ---------- */
+function list(items){return h("ul",{class:"tri"},items.map(function(t){return h("li",{text:t});}));}
+function slides(){
+  var b=BRIEF,r=b.reference||{};
+  return [
+    {label:"The video",body:[h("h1",{text:b.title}),h("div",{class:"meta"},[h("div",null,[h("span",{class:"label",text:"Client"}),h("span",{text:b.client})]),h("div",null,[h("span",{class:"label",text:"Format"}),h("span",{text:"Long-form, talking head"})])]),h("p",{text:b.concept})]},
+    {label:"Reference video",body:[h("h2",{text:r.title||"Reference video"}),h("div",{class:"meta"},[r.views?h("div",null,[h("span",{class:"label",text:"Performance"}),h("span",{text:r.views})]):null,r.note?h("div",null,[h("span",{class:"label",text:"Why we picked it"}),h("span",{text:r.note})]):null]),h("span",{class:"label",text:"Why it worked"}),h("div",{style:"height:.9rem"}),list(r.why||[])]},
+    {label:"What we're taking",body:[h("h2",{text:"Signal and noise"}),h("div",{class:"split"},[h("div",null,[h("h3",{class:"label red",text:"Take this"}),list(b.signal||[])]),h("div",null,[h("h3",{class:"label",text:"Leave this"}),list(b.noise||[])])])]},
+    {label:"Hook draft",body:[h("h2",{text:"The opening, as drafted"}),h("p",{class:"hookq",text:"“"+b.hook+"”"}),h("p",{style:"color:var(--muted)",text:"This is a starting point. The interview will check every number and phrase in it against what you actually say."})]},
+    {label:"Structure",body:[h("h2",{text:"How the video runs"}),h("ol",{class:"sections"},b.sections.map(function(s){return h("li",null,[h("div",null,[h("b",{text:s.name}),h("span",{text:s.note})])]);}))]},
+    {label:"Mid-roll and end screen",body:[h("h2",{text:"Keeping viewers on the channel"}),h("div",{class:"split"},[h("div",null,[h("h3",{class:"label red",text:"Mid-roll"}),h("p",{text:b.midroll})]),h("div",null,[h("h3",{class:"label red",text:"End screen"}),h("p",{text:b.endscreen})])])]},
+    {label:"Your interview",body:interviewSlide()}
+  ];
+}
+function interviewSlide(){
+  var b=BRIEF,started=state.turns.length>0;
+  var blocked=cap.ready&&!cap.sample;
+  return [
+    h("h2",{text:"Your interview"}),
+    h("p",{text:b.interviewIntro}),
+    h("span",{class:"label",text:"The interview covers"}),h("div",{style:"height:1rem"}),
+    list(b.covers||[]),
+    h("div",{class:"tip"},[h("span",{class:"label",text:"Pro tip"}),h("p",{text:"Dictate, don't type. Talk through your answers like you're on a podcast. Wispr Flow works well, or use your computer's built-in dictation: press fn twice on a Mac, or Win+H on Windows."})]),
+    h("div",{class:"start"},[
+      h("div",{style:"display:flex;flex-wrap:wrap;gap:1rem 1.4rem;align-items:center"},[
+        h("button",{class:"btn primary",id:"start",disabled:blocked||!cap.ready,onclick:startInterview},[started?(state.done?"Review interview":"Continue interview"):"Start interview",svg("M5 12h14M13 6l6 6-6 6")]),
+        started?h("button",{class:"link",onclick:restart,text:"Start over"}):null
+      ]),
+      !cap.ready?h("p",{class:"notice",text:"Connecting to Claude…"}):null,
+      blocked?h("p",{class:"notice",text:"The interviewer runs on Claude. Open this page from its Claude link while signed in to your Claude account to start."}):null,
+      h("div",{class:"facts"},[
+        h("div",null,[h("span",{class:"label",text:"Expected"}),h("span",{text:b.expected})]),
+        h("div",null,[h("span",{class:"label",text:"Delivery"}),h("span",{text:b.delivery})])
+      ])
+    ])
+  ];
+}
+function renderBrief(){
+  var S=slides(),i=state.slide,s=S[i];
+  var canEdit=cap.canEdit&&cap.artifact;
+  app.replaceChildren(
+    bar("Script brief",canEdit?h("button",{class:"btn",onclick:function(){state.view="edit";render();},text:"Edit brief"}):null),
+    h("main",null,[
+      h("div",{class:"deck"},[
+        h("button",{class:"arrow","aria-label":"Previous",disabled:i===0,onclick:function(){go(-1);}},[svg("M15 6l-6 6 6 6")]),
+        h("section",{class:"slide","aria-live":"polite"},[
+          h("div",{class:"slide-head"},[h("span",{class:"label red",text:s.label}),h("span",{class:"count",text:pad(i+1)+" / "+pad(S.length)})])
+        ].concat(s.body)),
+        h("button",{class:"arrow","aria-label":"Next",disabled:i===S.length-1,onclick:function(){go(1);}},[svg("M9 6l6 6-6 6")])
+      ]),
+      h("div",{class:"dots"},S.map(function(x,j){return h("button",{"aria-label":"Go to "+x.label,"aria-current":j===i?"true":"false",onclick:function(){state.slide=j;render();}});})),
+      h("div",{style:"height:1.6rem"}),
+      canEdit&&BRIEF.example?h("div",{class:"owner"},[h("span",{class:"chip",text:"Example brief"}),h("span",{text:"Only you see this. Replace it with a real brief before sending the link to a client."})]):null
+    ])
+  );
+}
+function pad(n){return (n<10?"0":"")+n;}
+function go(d){var n=slides().length;state.slide=Math.max(0,Math.min(n-1,state.slide+d));render();}
+document.addEventListener("keydown",function(e){if(state.view!=="brief")return;if(e.target.closest("input,textarea"))return;if(e.key==="ArrowRight")go(1);if(e.key==="ArrowLeft")go(-1);});
+
+/* ---------- interview ---------- */
+function rules(){
+  var b=BRIEF,st=stages();
+  return [
+    "You are the interviewer for a YouTube script production team. You are interviewing "+b.client+", the expert who will present this video. Your job is to pull out the real expertise, stories, numbers and exact wording needed so the script sounds like them and says things only they could say. You do NOT write the script.",
+    "",
+    "THE BRIEF",
+    "Title: "+b.title,
+    "Concept: "+b.concept,
+    "Reference video: "+(b.reference&&b.reference.title||"")+" ("+(b.reference&&b.reference.views||"")+"). Why it worked: "+((b.reference&&b.reference.why)||[]).join("; "),
+    "Take from the reference: "+(b.signal||[]).join("; "),
+    "Ignore from the reference: "+(b.noise||[]).join("; "),
+    "Draft hook: "+b.hook,
+    "Sections, in order: "+b.sections.map(function(s,i){return (i+1)+". "+s.name+" ("+s.note+")";}).join(" | "),
+    "Mid-roll: "+b.midroll,
+    "End screen: "+b.endscreen,
+    "The interview should cover: "+(b.covers||[]).join("; "),
+    "",
+    "STAGES (in order): "+st.map(function(s,i){return (i+1)+" "+s;}).join(", "),
+    "",
+    "HOW TO RUN IT",
+    "- First message: greet "+b.client.split(" ")[0]+" by first name, say it takes about 15 to 20 minutes and that you'll ask one question at a time, push when needed, and wrap when the script has what it needs. Then say you want to make sure you're building the right video, restate the concept in 2 to 3 plain sentences, and ask whether that matches how they'd teach it or whether they'd reshape the framing or angle.",
+    "- Ask exactly ONE question per message. Keep it short and conversational; the client is dictating by voice. Acknowledge their last answer in one short sentence at most, then ask.",
+    "- Dig deeper on every claim before moving on: ask how they actually do or check it, for a real example, for the actual numbers, for the mistake most people make, or why it matters. Move on once a point has a method plus at least one concrete example or number. If they can't give one, note it and move on.",
+    "- In the Hook and proof stage, show the drafted hook (adapted to anything they've told you) and ask what needs to change: the claims, the proof, or the language. Collect specific results, names they're comfortable naming, numbers and timeframes. When they correct a fact, use the corrected version from then on and show the updated line.",
+    "- Any line you draft for them to review goes in its own paragraph starting with \"> \".",
+    "- Let useful tangents run; stories that come out unprompted are often the best material.",
+    "- Never invent results, stories, numbers or expertise.",
+    "- Writing style: plain and direct. Never use \"it's not X, it's Y\" constructions, \"here's the thing\"-style suspense transitions, repeated sentence openings for effect, \"imagine a world\" projections, or patronizing analogies. No emoji, no headings, no bullet lists.",
+    "- Payoff check stage: compare what you've collected against the title's promise and fill any gap.",
+    "- Next step stage: ask what a viewer who wants help should do next, and confirm the end-screen video still fits.",
+    "",
+    "FORMAT",
+    "- Start EVERY message with a stage tag on its own line, exactly like [[stage:3]], using the number of the stage you're in.",
+    "- When every stage has enough material, tell them that's everything you need and that the team will take it from here, then end the message with [[done]] on its own line.",
+  ].join("\n");
+}
+function parseReply(t){
+  var m=t.match(/\[\[stage:(\d+)\]\]/),done=/\[\[done\]\]/.test(t);
+  var clean=t.replace(/\[\[stage:\d+\]\]\s*/g,"").replace(/\[\[done\]\]/g,"").replace(/\[\[[^\]]*$/,"").trim();
+  return {stage:m?parseInt(m[1],10):null,done:done,text:clean};
+}
+function fmtInline(el,txt){var parts=txt.split(/(\*\*[^*]+\*\*)/g);parts.forEach(function(p){if(/^\*\*[^*]+\*\*$/.test(p))el.appendChild(h("strong",{text:p.slice(2,-2)}));else if(p)el.appendChild(document.createTextNode(p));});return el;}
+function paras(text){
+  var out=h("div",{class:"body"});
+  text.split(/\n{2,}/).forEach(function(b){b=b.trim();if(!b)return;
+    if(/^>\s?/.test(b))out.appendChild(fmtInline(h("blockquote"),b.replace(/^>\s?/gm,"")));
+    else out.appendChild(fmtInline(h("p"),b));});
+  return out;
+}
+function turnEl(t){
+  if(t.role==="assistant")return h("div",{class:"turn"},[h("span",{class:"label red",text:"Interviewer"}),paras(parseReply(t.content).text)]);
+  return h("div",{class:"turn"},[h("span",{class:"label",text:BRIEF.client}),h("div",{class:"answer",text:t.content})]);
+}
+var live=null;
+function renderInterview(){
+  var thread=h("div",{class:"thread",id:"thread"},state.turns.map(turnEl));
+  live=h("div",{class:"turn",hidden:!state.busy},[h("span",{class:"label red",text:"Interviewer"}),h("div",{id:"live"},[h("div",{class:"thinking"},[h("i"),h("i"),h("i"),"Thinking"])])]);
+  thread.appendChild(live);
+  if(state.err)thread.appendChild(h("div",{class:"turn"},[h("p",{class:"err",text:state.err}),lastIsUser()?h("div",null,[h("button",{class:"btn",onclick:function(){ask();},text:"Try again"})]):null]));
+  if(state.done&&!state.busy)thread.appendChild(h("div",{class:"done-card"},[h("span",{class:"label red",text:"Interview complete"}),h("p",{text:"Everything the script needs is here. Build the context pack to review it and send it to the team."}),h("div",null,[h("button",{class:"btn primary",onclick:buildPack,text:"Build context pack"})])]));
+  var ta=h("textarea",{id:"answer",rows:"1",placeholder:state.done?"Add anything else you want the team to know…":"Type or dictate your answer…","aria-label":"Your answer",disabled:state.busy,oninput:grow,onkeydown:function(e){if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();send();}}});
+  var sendBtn=h("button",{class:"send",id:"sendbtn","aria-label":state.busy?"Stop":"Send answer",onclick:function(){state.busy?stop():send();}},[state.busy?svg("M7 7h10v10H7z"):svg("M5 12h14M13 6l6 6-6 6")]);
+  app.replaceChildren(
+    bar("Interview",h("button",{class:"btn",onclick:endInterview,disabled:state.turns.length<3||state.busy,text:"End interview"})),
+    h("main",null,[thread]),
+    h("div",{class:"dock"},[h("div",{class:"dock-in"},[h("div",{class:"composer"},[ta,sendBtn]),h("div",{class:"hint"},[h("span",{text:"Enter to send · Shift+Enter for a new line"}),h("button",{class:"link",onclick:function(){state.view="brief";render();},text:"Back to brief"})])])])
+  );
+  var d=null;try{d=sessionStorage.getItem(KEY+":draft");}catch(e){}
+  if(d&&!state.busy){ta.value=d;grow.call(ta);}
+  scrollEnd();
+  if(!state.busy)ta.focus({preventScroll:true});
+}
+function grow(){this.style.height="auto";this.style.height=Math.min(this.scrollHeight,window.innerHeight*.4)+"px";try{sessionStorage.setItem(KEY+":draft",this.value);}catch(e){}}
+function scrollEnd(){requestAnimationFrame(function(){window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"});});}
+function lastIsUser(){return state.turns.length&&state.turns[state.turns.length-1].role==="user";}
+function errCopy(e){
+  var c=e&&e.code;
+  if(c==="not_granted")return "Claude access wasn't allowed for this page. Reload and choose Allow to run the interview.";
+  if(c==="rate_limited"||c==="queue_overflow")return "Claude is busy right now. Wait a minute, then try again.";
+  if(c==="prompt_too_large")return "This interview has grown too long to continue. End it and build the context pack.";
+  if(c==="session_expired")return "Your Claude session expired. Reload the page and sign in again.";
+  if(c==="sampling_disabled"||c==="capability_disabled"||c==="not_declared")return "The interviewer isn't available for your account.";
+  return "The interviewer couldn't answer. Your answer is saved, so try again.";
+}
+function startInterview(){
+  state.view="interview";state.err="";render();
+  if(!state.turns.length)ask();
+}
+function send(){
+  var ta=document.getElementById("answer");if(!ta)return;var v=ta.value.trim();if(!v||state.busy)return;
+  state.turns.push({role:"user",content:v});state.err="";save();
+  try{sessionStorage.removeItem(KEY+":draft");}catch(e){}
+  ask();
+}
+function ask(){
+  if(!cap.sample){state.err="The interviewer runs on Claude. Open this page from its Claude link while signed in.";render();return;}
+  state.busy=true;state.err="";render();
+  var ctl=new AbortController();state.ctl=ctl;
+  var msgs=[{role:"user",content:rules()+"\n\nBegin the interview now with your first message."}].concat(state.turns.slice(-60));
+  cap.sample(msgs,{cache:false,signal:ctl.signal,onText:function(u){var el=document.getElementById("live");if(el){el.replaceChildren(paras(parseReply(u.text).text||"…"));}scrollEnd();}})
+  .then(function(r){
+    var p=parseReply(r.text);
+    state.turns.push({role:"assistant",content:r.text});
+    if(p.stage)state.stage=p.stage;if(p.done)state.done=true;
+    state.busy=false;save();render();
+  }).catch(function(e){
+    state.busy=false;
+    if(e&&e.code==="cancelled"){if(e.text&&e.text.trim()){state.turns.push({role:"assistant",content:e.text});save();}}
+    else state.err=errCopy(e);
+    render();
+  });
+}
+function stop(){if(state.ctl)state.ctl.abort();}
+function endInterview(){buildPack();}
+function restart(){
+  if(!state.confirmRestart){state.confirmRestart=true;var b=document.activeElement;if(b)b.textContent="Click again to erase your answers";setTimeout(function(){state.confirmRestart=false;},4000);return;}
+  state.confirmRestart=false;state.turns=[];state.pack="";state.stage=1;state.done=false;save();render();
+}
+
+/* ---------- context pack ---------- */
+function transcript(){return state.turns.map(function(t){return (t.role==="assistant"?"INTERVIEWER: "+parseReply(t.content).text:BRIEF.client.toUpperCase()+": "+t.content);}).join("\n\n");}
+function buildPack(){
+  if(!cap.sample)return;
+  state.view="pack";state.pack="";state.busy=true;state.err="";render();
+  var b=BRIEF,ctl=new AbortController();state.ctl=ctl;
+  var prompt=["You are preparing a context pack for a YouTube script writer. Use ONLY what the client said in the interview transcript below. Keep the client's own wording wherever possible, especially in quotes and stories. Never invent facts. Where something is thin or unconfirmed, list it under Gaps.",
+    "","Video title: "+b.title,"Client: "+b.client,"Brief concept: "+b.concept,"Sections: "+b.sections.map(function(s){return s.name;}).join(" | "),"End screen planned: "+b.endscreen,
+    "","Write it in Markdown with exactly this structure:",
+    "# Context Pack: <title>","Client: <name>","Angle (as confirmed): <2-3 sentences>",
+    "## Hook","- Approved hook draft (with the client's corrections)","- Credibility proof: results, names, numbers, timeframes",
+    "## <one section per brief section, in order, named after the section>","- Point: <client's words>, then indented sub-bullets for Method, Example / number, Common mistake","- Stories","- Notable quotes (verbatim, as > quotes)",
+    "## Payoff check","- Title promise, and how the material delivers it",
+    "## Business tie-in and CTA","## End screen","## Corrections made during interview","- <old> -> <corrected>","## Gaps",
+    "","Plain, direct writing. No preamble before the # heading and nothing after the Gaps section.",
+    "","INTERVIEW TRANSCRIPT","",transcript()].join("\n");
+  cap.sample(prompt,{cache:false,signal:ctl.signal,modelTier:"complex",onText:function(u){var d=document.getElementById("doc");if(d)d.replaceChildren.apply(d,md(u.text));}})
+  .then(function(r){state.pack=r.text.trim();state.busy=false;save();render();})
+  .catch(function(e){state.busy=false;if(e&&e.text)state.pack=e.text;state.err=e&&e.code==="cancelled"?"Stopped before the pack was finished.":errCopy(e);save();render();});
+}
+function md(src){
+  var out=[],ul=null,sub=null;
+  src.split("\n").forEach(function(line){
+    var m;
+    if(/^\s*$/.test(line)){ul=null;sub=null;return;}
+    if((m=line.match(/^(#{1,3})\s+(.*)$/))){ul=null;sub=null;out.push(fmtInline(h("h"+m[1].length),m[2]));return;}
+    if((m=line.match(/^>\s?(.*)$/))){ul=null;out.push(fmtInline(h("blockquote"),m[1]));return;}
+    if((m=line.match(/^(\s{2,})[-*]\s+(.*)$/))&&ul){var last=ul.lastChild;if(!sub||sub.parentNode!==last){sub=h("ul");last.appendChild(sub);}sub.appendChild(fmtInline(h("li"),m[2]));return;}
+    if((m=line.match(/^\s*[-*]\s+(.*)$/))){if(!ul){ul=h("ul");out.push(ul);}sub=null;var mm=m[1].match(/^>\s?(.*)$/);ul.appendChild(mm?h("li",null,[fmtInline(h("blockquote"),mm[1])]):fmtInline(h("li"),m[1]));return;}
+    ul=null;sub=null;out.push(fmtInline(h("p"),line));
+  });
+  return out;
+}
+function copyPack(e){
+  var btn=e.currentTarget;
+  navigator.clipboard.writeText(state.pack).then(function(){toast("Copied");}).catch(function(){
+    var ta=h("textarea",{style:"position:fixed;opacity:0"});ta.value=state.pack;document.body.appendChild(ta);ta.select();
+    var ok=false;try{ok=document.execCommand("copy");}catch(x){}ta.remove();toast(ok?"Copied":"Select the text and copy it manually");});
+}
+function downloadPack(){
+  if(!cap.downloads)return;
+  var name="context-pack-"+BRIEF.client.toLowerCase().replace(/[^a-z0-9]+/g,"-")+".md";
+  cap.downloads.save({filename:name,data:state.pack}).then(function(){toast("Saved");}).catch(function(){});
+}
+function renderPack(){
+  var doc=h("article",{class:"doc",id:"doc"},state.pack?md(state.pack):[h("div",{class:"thinking"},[h("i"),h("i"),h("i"),"Building the context pack. This can take a minute."])]);
+  app.replaceChildren(
+    bar("Context pack",h("button",{class:"btn",onclick:function(){state.view="interview";render();},disabled:state.busy,text:"Back to interview"})),
+    h("main",null,[h("div",{class:"pack"},[
+      h("div",{class:"pack-actions"},[
+        state.busy?h("button",{class:"btn",onclick:stop,text:"Stop"}):null,
+        !state.busy&&state.pack?h("button",{class:"btn primary",onclick:copyPack,text:"Copy context pack"}):null,
+        !state.busy&&state.pack&&cap.downloads?h("button",{class:"btn",onclick:downloadPack,text:"Download .md"}):null,
+        !state.busy?h("button",{class:"link",onclick:buildPack,text:"Rebuild"}):null
+      ]),
+      !state.busy&&state.pack?h("p",{style:"margin:0 0 1.4rem;color:var(--muted)",text:"Send this to your production team. It's what the script will be written from."}):null,
+      state.err?h("p",{class:"err",text:state.err}):null,
+      doc
+    ])])
+  );
+}
+
+/* ---------- brief editor (owner only) ---------- */
+function field(id,label,value,opts){opts=opts||{};var inp=opts.area?h("textarea",{id:id,rows:opts.rows||"4"}):h("input",{id:id,type:"text"});inp.value=value||"";
+  return h("div",{class:"field"},[h("label",{class:"label",for:id,text:label}),inp,opts.help?h("small",{text:opts.help}):null]);}
+function val(id){return (document.getElementById(id).value||"").trim();}
+function lines(id){return val(id).split("\n").map(function(s){return s.trim();}).filter(Boolean);}
+function renderEdit(){
+  var b=BRIEF,r=b.reference||{};
+  app.replaceChildren(
+    bar("Edit brief",h("button",{class:"btn",onclick:function(){state.view="brief";render();},text:"Cancel"})),
+    h("main",null,[h("form",{class:"editor",id:"ed",onsubmit:saveBrief},[
+      h("h1",{text:"Edit brief"}),
+      h("p",{style:"margin:0;color:var(--muted)",text:"Saving publishes a new version of this page. Anyone with the link sees the updated brief, and interviews already in progress on this brief keep their answers only if the video title stays the same."}),
+      h("div",{class:"row"},[field("f-client","Client name",b.client),field("f-title","Video title",b.title)]),
+      field("f-concept","Concept",b.concept,{area:true}),
+      h("div",{class:"row"},[field("f-rtitle","Reference video title",r.title),field("f-rviews","Reference performance",r.views,{help:"e.g. 480K views"})]),
+      field("f-rnote","Why we picked it",r.note),
+      field("f-rwhy","Why it worked",(r.why||[]).join("\n"),{area:true,help:"One point per line"}),
+      h("div",{class:"row"},[field("f-signal","Take this",(b.signal||[]).join("\n"),{area:true,help:"One per line"}),field("f-noise","Leave this",(b.noise||[]).join("\n"),{area:true,help:"One per line"})]),
+      field("f-hook","Hook draft",b.hook,{area:true,rows:"3"}),
+      field("f-sections","Sections",b.sections.map(function(s){return s.name+(s.note?" :: "+s.note:"");}).join("\n"),{area:true,rows:"6",help:"One per line, in order. Add notes after two colons, like: Lesson 1 :: what to cover"}),
+      h("div",{class:"row"},[field("f-mid","Mid-roll",b.midroll,{area:true,rows:"3"}),field("f-end","End-screen video",b.endscreen,{area:true,rows:"3"})]),
+      field("f-intro","Interview intro",b.interviewIntro,{area:true,rows:"2"}),
+      field("f-covers","The interview covers",(b.covers||[]).join("\n"),{area:true,help:"One per line"}),
+      h("div",{class:"row"},[field("f-exp","Expected time",b.expected),field("f-del","Delivery",b.delivery)]),
+      h("div",{style:"display:flex;gap:1rem;align-items:center;flex-wrap:wrap"},[h("button",{class:"btn primary",type:"submit",id:"savebtn",text:"Save and publish"}),h("span",{id:"savemsg",class:"err"})])
+    ])])
+  );
+}
+function slug(s){return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,60)||"brief";}
+function saveBrief(e){
+  e.preventDefault();
+  var nb={
+    id:slug(val("f-title")),example:false,client:val("f-client"),title:val("f-title"),concept:val("f-concept"),
+    reference:{title:val("f-rtitle"),views:val("f-rviews"),note:val("f-rnote"),why:lines("f-rwhy")},
+    signal:lines("f-signal"),noise:lines("f-noise"),hook:val("f-hook"),
+    sections:lines("f-sections").map(function(l){var p=l.split("::");return {name:p[0].trim(),note:(p[1]||"").trim()};}),
+    midroll:val("f-mid"),endscreen:val("f-end"),interviewIntro:val("f-intro"),covers:lines("f-covers"),expected:val("f-exp"),delivery:val("f-del")
+  };
+  var msg=document.getElementById("savemsg"),btn=document.getElementById("savebtn");
+  if(!nb.client||!nb.title||!nb.sections.length){msg.textContent="Add a client name, a video title and at least one section.";return;}
+  btn.disabled=true;btn.textContent="Publishing…";msg.textContent="";
+  cap.artifact.publish(documentFor(nb)).then(function(){toast("Published");}).catch(function(err){
+    btn.disabled=false;btn.textContent="Save and publish";
+    msg.textContent=err&&err.code==="conflict"?"Someone else saved first. The page reloaded to their version.":err&&(err.code==="not_writer"||err.code==="not_granted")?"You don't have edit access to this page.":"Couldn't publish. Try again.";
+  });
+}
+function documentFor(nb){
+  var reset="html{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.5 system-ui,-apple-system,sans-serif;background:#fafafa}img{max-width:100%}[hidden]{display:none!important}";
+  var head=document.querySelector("head style");if(head&&head.textContent)reset=head.textContent;
+  var title=(document.querySelector("title")||{}).textContent||"Script Interview";
+  var links=Array.prototype.map.call(document.querySelectorAll("link[href^='https://fonts.']"),function(l){return l.outerHTML;}).join("");
+  var css=document.getElementById("css").textContent,js=document.getElementById("appjs").textContent;
+  var json=JSON.stringify(nb).replace(/</g,"\\u003c");
+  return "<!doctype html><html><head><meta charset=utf8><meta name=viewport content=\"width=device-width,initial-scale=1,viewport-fit=cover\"><style>"+reset+"</style></head><body>"+
+    "<title>"+title.replace(/</g,"&lt;")+"</title>"+links+"<style id=\"css\">"+css+"</style><div id=\"app\"></div>"+
+    "<script type=\"application/json\" id=\"brief\">"+json+"<\/script><script id=\"appjs\">"+js+"<\/script></body></html>";
+}
+
+/* ---------- boot ---------- */
+function render(){
+  if(state.view==="interview")renderInterview();
+  else if(state.view==="pack")renderPack();
+  else if(state.view==="edit")renderEdit();
+  else renderBrief();
+}
+render();
+var C=window.claude;
+if(C&&C.use){
+  Promise.all([
+    C.use("sample").catch(function(){return null;}),
+    C.use("artifact").catch(function(){return null;}),
+    C.use("downloads").catch(function(){return null;}),
+    C.use("user").catch(function(){return null;})
+  ]).then(function(r){cap.sample=r[0];cap.artifact=r[1];cap.downloads=r[2];cap.user=r[3];
+    return (cap.user?cap.user.canEdit().catch(function(){return false;}):Promise.resolve(false)).then(function(ce){cap.canEdit=ce===true;cap.ready=true;if(state.view!=="interview"||!state.busy)render();});});
+}else{cap.ready=true;render();}
+})();
+</script>

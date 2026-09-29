@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Onboarding Dashboard</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="/assets/style.css">
+<style>html{padding-top:env(safe-area-inset-top,0px)}body{margin:0}</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="/assets/questions.js"></script>
+<script>
+(function(){
+"use strict";
+var QUESTIONS=window.QUESTIONS,N=QUESTIONS.length,qid=window.qid;
+var app=document.getElementById("app");
+var PW_KEY="onboarding:admin";
+var pw="";try{pw=sessionStorage.getItem(PW_KEY)||"";}catch(e){}
+var ui={view:pw?"loading":"login",clients:[],detail:null,err:"",setup:null,fresh:null,confirmDel:null};
+
+function h(tag,attrs,kids){var el=document.createElement(tag);if(attrs)for(var k in attrs){var v=attrs[k];if(v==null||v===false)continue;if(k==="class")el.className=v;else if(k==="text")el.textContent=v;else if(k.slice(0,2)==="on")el.addEventListener(k.slice(2),v);else el.setAttribute(k,v===true?"":v);}
+ (kids||[]).forEach(function(c){if(c==null||c===false)return;el.appendChild(typeof c==="string"?document.createTextNode(c):c);});return el;}
+function toast(m){var t=h("div",{class:"toast",role:"status",text:m});document.body.appendChild(t);setTimeout(function(){t.remove();},2600);}
+function fmtDate(iso){if(!iso)return "—";try{return new Date(iso).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});}catch(e){return iso;}}
+function count(c){var n=0;for(var i=0;i<N;i++)if(((c.answers||{})[qid(i)]||"").trim())n++;return n;}
+function linkFor(c){return location.origin+"/?c="+c.code;}
+function copy(t,msg){
+  var fb=function(){var ta=h("textarea",{style:"position:fixed;top:0;left:0;opacity:0"});ta.value=t;document.body.appendChild(ta);ta.select();var r=false;try{r=document.execCommand("copy");}catch(e){}ta.remove();toast(r?(msg||"Copied"):"Select the text and copy it manually");};
+  try{navigator.clipboard.writeText(t).then(function(){toast(msg||"Copied");},fb);}catch(e){fb();}
+}
+function api(method,path,body){
+  return fetch(path,{method:method,cache:"no-store",headers:{"Content-Type":"application/json","x-admin-password":pw},body:body?JSON.stringify(body):undefined})
+  .then(function(r){return r.json().catch(function(){return {};}).then(function(j){if(!r.ok){var e=new Error(j.error||("HTTP "+r.status));e.code=j.error;e.status=r.status;throw e;}return j;});});
+}
+function bar(right){return h("header",{class:"bar"},[h("div",{class:"bar-in"},[h("div",{class:"mark"},[h("b",{text:"Channel Onboarding"}),h("span",{class:"label",text:"Your dashboard"})]),right||null])]);}
+
+/* ---------- login & setup ---------- */
+function renderLogin(){
+  var inp=h("input",{id:"pw",type:"password",autocomplete:"current-password",required:true});
+  var err=h("p",{class:"err",role:"alert",text:ui.err});
+  app.replaceChildren(bar(),h("main",null,[h("form",{class:"login",onsubmit:function(e){e.preventDefault();pw=inp.value;ui.err="";load(true);}},[
+    h("h1",{class:"big",text:"Sign in"}),
+    h("p",{class:"muted",style:"margin:0",text:"Enter your dashboard password to see client interviews."}),
+    h("div",{class:"field"},[h("label",{class:"label",for:"pw",text:"Password"}),inp]),
+    err,
+    h("div",null,[h("button",{class:"btn primary",type:"submit",text:"Sign in"})])
+  ])]));
+  inp.focus();
+}
+function renderSetup(){
+  var what=ui.setup;
+  app.replaceChildren(bar(),h("main",null,[h("div",{class:"col"},[
+    h("span",{class:"label red",text:"One-time setup"}),
+    h("h1",{class:"big",text:what==="admin_password_not_set"?"Set your dashboard password":"Connect storage so answers can save"}),
+    h("div",{class:"setup"},what==="admin_password_not_set"?[
+      h("ol",null,[
+        h("li",null,["In Vercel, open this project, then ",h("b",{text:"Settings → Environment Variables"}),"."]),
+        h("li",null,["Add a variable named ",h("code",{text:"ADMIN_PASSWORD"})," with the password you want to use here."]),
+        h("li",null,["Go to ",h("b",{text:"Deployments"}),", open the menu on the latest one, and choose ",h("b",{text:"Redeploy"}),"."])
+      ])
+    ]:[
+      h("ol",null,[
+        h("li",null,["In Vercel, open this project, then the ",h("b",{text:"Storage"})," tab."]),
+        h("li",null,["Choose ",h("b",{text:"Create Database"}),", pick ",h("b",{text:"Upstash for Redis"})," (the free plan is plenty), and connect it to this project."]),
+        h("li",null,["Go to ",h("b",{text:"Deployments"}),", open the menu on the latest one, and choose ",h("b",{text:"Redeploy"}),"."])
+      ])
+    ]),
+    h("div",{class:"actions"},[h("button",{class:"btn",onclick:function(){load(false);},text:"Check again"})])
+  ])]));
+}
+
+/* ---------- dashboard ---------- */
+function renderList(){
+  var clients=ui.clients;
+  var nameI=h("input",{id:"newname",type:"text",placeholder:"e.g. Maya Torres",autocomplete:"off"});
+  var createBtn=h("button",{class:"btn primary",type:"submit",text:"Create link"});
+  var form=h("form",{class:"newclient",onsubmit:function(e){e.preventDefault();var n=nameI.value.trim();if(!n){nameI.focus();return;}
+    createBtn.disabled=true;api("POST","/api/admin",{name:n}).then(function(j){ui.fresh=j.client.code;ui.clients.unshift(j.client);copy(linkFor(j.client),"Link created and copied");renderList();})
+    .catch(function(e){createBtn.disabled=false;fail(e);});}},[
+    h("div",{class:"field"},[h("label",{class:"label",for:"newname",text:"New client"}),nameI]),createBtn]);
+  var sent=clients.filter(function(c){return c.status==="submitted";}).length;
+  var started=clients.filter(function(c){return c.status==="in_progress";}).length;
+  var list=!clients.length?h("div",{class:"empty",text:"No clients yet. Add a client above to create their personal interview link."}):
+    h("div",{class:"table",role:"list"},[h("div",{class:"trow admin head"},[h("span",{class:"label",text:"Client"}),h("span",{class:"label hide-md",text:"Updated"}),h("span",{class:"label hide-md",text:"Answered"}),h("span",{class:"label hide-md",text:"Status"}),h("span")])].concat(clients.map(function(c){
+      var st=c.status==="submitted"?h("span",{class:"chip ok",text:"Sent"}):c.status==="in_progress"?h("span",{class:"chip",text:"In progress"}):h("span",{class:"chip",text:"Not started"});
+      return h("div",{class:"trow admin"+(ui.fresh===c.code?" new":""),role:"listitem"},[
+        h("span",{style:"min-width:0"},[h("b",{text:c.name}),h("small",{text:"Added "+fmtDate(c.createdAt)})]),
+        h("span",{class:"num hide-md muted",style:"font-size:.9rem",text:fmtDate(c.updatedAt)}),
+        h("span",{class:"num hide-md",text:count(c)+" / "+N}),
+        h("span",{class:"hide-md"},[st]),
+        h("span",{class:"rowbtns"},[
+          h("button",{class:"btn sm",onclick:function(){copy(linkFor(c),"Link copied");},text:"Copy link"}),
+          h("button",{class:"btn sm",onclick:function(){ui.detail=c.code;ui.confirmDel=null;render();},text:"View"})
+        ])
+      ]);
+    })));
+  app.replaceChildren(
+    bar(h("button",{class:"btn",onclick:function(){load(false);},text:"Refresh"})),
+    h("main",null,[h("div",{class:"col",style:"padding-bottom:4rem"},[
+      h("span",{class:"label red",text:"Only you can see this page"}),
+      h("h1",{class:"big",text:"Client interviews"}),
+      clients.length?h("div",{class:"facts"},[
+        h("div",null,[h("span",{class:"label",text:"Clients"}),h("span",{text:String(clients.length)})]),
+        h("div",null,[h("span",{class:"label",text:"Sent"}),h("span",{text:String(sent)})]),
+        h("div",null,[h("span",{class:"label",text:"In progress"}),h("span",{text:String(started)})])
+      ]):null,
+      form,
+      h("p",{class:"muted",style:"margin:-.6rem 0 0;font-size:.88rem",text:"Each client gets their own link. Send it to them however you like; no sign-in needed. Answers show up here while they type."}),
+      ui.err?h("p",{class:"err",role:"alert",text:ui.err}):null,
+      list
+    ])])
+  );
+}
+function exportText(c){
+  var out=["# Onboarding interview: "+c.name];
+  if(c.submittedAt)out.push("Sent: "+fmtDate(c.submittedAt));else if(c.updatedAt)out.push("Last updated: "+fmtDate(c.updatedAt));
+  out.push("");
+  QUESTIONS.forEach(function(q,i){out.push("## "+(i+1)+". "+q[0]);out.push(((c.answers||{})[qid(i)]||"").trim()||"(not answered)");out.push("");});
+  return out.join("\n");
+}
+function download(c){
+  var blob=new Blob([exportText(c)],{type:"text/markdown"});var a=h("a",{href:URL.createObjectURL(blob),download:"onboarding-"+c.name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")+".md"});
+  document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);
+}
+function renderDetail(){
+  var c=ui.clients.filter(function(x){return x.code===ui.detail;})[0];
+  if(!c){ui.detail=null;return renderList();}
+  var delBtn=h("button",{class:"btn danger",onclick:function(){
+    if(ui.confirmDel!==c.code){ui.confirmDel=c.code;delBtn.textContent="Click again to delete for good";return;}
+    api("DELETE","/api/admin?c="+c.code).then(function(){ui.clients=ui.clients.filter(function(x){return x.code!==c.code;});ui.detail=null;toast("Deleted");renderList();}).catch(fail);
+  },text:"Delete client"});
+  app.replaceChildren(
+    bar(h("button",{class:"btn",onclick:function(){ui.detail=null;render();},text:"All clients"})),
+    h("main",null,[h("div",{class:"col",style:"padding-bottom:4rem"},[
+      h("span",{class:"label red",text:c.status==="submitted"?"Sent "+fmtDate(c.submittedAt):c.status==="in_progress"?"In progress · updated "+fmtDate(c.updatedAt):"Not started yet"}),
+      h("h1",{class:"big",text:c.name}),
+      h("p",{class:"lede muted",text:count(c)+" of "+N+" questions answered"}),
+      h("div",{class:"actions"},[
+        h("button",{class:"btn primary",onclick:function(){copy(exportText(c),"Answers copied");},text:"Copy all answers"}),
+        h("button",{class:"btn",onclick:function(){download(c);},text:"Download .md"}),
+        h("button",{class:"btn",onclick:function(){copy(linkFor(c),"Link copied");},text:"Copy their link"})
+      ]),
+      h("ol",{class:"review"},QUESTIONS.map(function(q,i){
+        var a=((c.answers||{})[qid(i)]||"").trim();
+        return h("li",null,[h("div",{class:"rq"},[h("b",{text:(i+1)+". "+q[0]})]),a?h("p",{class:"ra",text:a}):h("span",null,[h("span",{class:"chip red",text:"Not answered"})])]);
+      })),
+      h("div",{class:"actions"},[delBtn])
+    ])])
+  );
+  window.scrollTo(0,0);
+}
+function renderLoading(){app.replaceChildren(bar(),h("main",null,[h("div",{class:"col"},[h("p",{class:"muted",text:"Loading…"})])]));}
+
+function fail(e){
+  if(e.status===401){try{sessionStorage.removeItem(PW_KEY);}catch(x){}pw="";ui.view="login";ui.err="That password didn’t work. Try again.";return render();}
+  if(e.code==="admin_password_not_set"||e.code==="storage_not_connected"){ui.view="setup";ui.setup=e.code;return render();}
+  ui.err=e.code&&e.code.indexOf("storage_error")===0?"The storage service returned an error. Try again in a minute.":"Something went wrong. Check your connection and try again.";
+  if(ui.view==="login")ui.view="list";render();
+}
+function load(fromLogin){
+  if(!fromLogin&&ui.view!=="list"&&ui.view!=="detail")renderLoading();
+  api("GET","/api/admin").then(function(j){
+    try{sessionStorage.setItem(PW_KEY,pw);}catch(e){}
+    ui.clients=j.clients||[];ui.err="";if(ui.view!=="detail")ui.view="list";render();
+  }).catch(fail);
+}
+function render(){
+  if(ui.view==="login")return renderLogin();
+  if(ui.view==="setup")return renderSetup();
+  if(ui.view==="loading")return renderLoading();
+  if(ui.detail)return renderDetail();
+  return renderList();
+}
+render();
+if(pw)load(false);
+setInterval(function(){if(pw&&(ui.view==="list")&&!document.hidden&&document.activeElement.tagName!=="INPUT")load(false);},30000);
+})();
+</script>
+</body>
+</html>

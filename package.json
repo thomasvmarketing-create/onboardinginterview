@@ -1,0 +1,10 @@
+{
+  "name": "onboardingquestions",
+  "private": true,
+  "description": "Client onboarding interview with voice answers and an owner dashboard.",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "dev": "node tests/server.js",
+    "test": "node tests/site.test.js"
+  }
+}

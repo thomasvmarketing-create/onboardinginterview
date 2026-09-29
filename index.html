@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Channel Onboarding Interview</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="/assets/style.css">
+<style>html{padding-top:env(safe-area-inset-top,0px)}body{margin:0}</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="/assets/questions.js"></script>
+<script>
+(function(){
+"use strict";
+var QUESTIONS=window.QUESTIONS,N=QUESTIONS.length,qid=window.qid;
+var app=document.getElementById("app");
+var CODE=(new URLSearchParams(location.search).get("c")||"").trim().toLowerCase();
+var LS="onboarding:"+CODE;
+
+var data={name:"",answers:{},status:"new",updatedAt:null,submittedAt:null};
+var ui={view:"welcome",idx:0,mode:"pending",saveState:"idle",linkError:""};
+
+try{var saved=JSON.parse(localStorage.getItem(LS)||"null");if(saved&&saved.data){data=Object.assign(data,saved.data);ui.idx=Math.min(N-1,saved.idx||0);}}catch(e){}
+
+/* ---------- helpers ---------- */
+function h(tag,attrs,kids){var el=document.createElement(tag);if(attrs)for(var k in attrs){var v=attrs[k];if(v==null||v===false)continue;if(k==="class")el.className=v;else if(k==="text")el.textContent=v;else if(k.slice(0,2)==="on")el.addEventListener(k.slice(2),v);else el.setAttribute(k,v===true?"":v);}
+ (kids||[]).forEach(function(c){if(c==null||c===false)return;el.appendChild(typeof c==="string"?document.createTextNode(c):c);});return el;}
+function svg(d){var s=document.createElementNS("http://www.w3.org/2000/svg","svg");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("fill","none");s.setAttribute("stroke","currentColor");s.setAttribute("stroke-width","2.2");s.setAttribute("stroke-linecap","round");s.setAttribute("stroke-linejoin","round");s.setAttribute("aria-hidden","true");var p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",d);s.appendChild(p);return s;}
+var ARROW="M5 12h14M13 6l6 6-6 6",MIC="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3",STOP="M7 7h10v10H7z";
+function toast(m){var t=h("div",{class:"toast",role:"status",text:m});document.body.appendChild(t);setTimeout(function(){t.remove();},2600);}
+function answered(){var c=0;for(var i=0;i<N;i++)if((data.answers[qid(i)]||"").trim())c++;return c;}
+function pad(n){return (n<10?"0":"")+n;}
+function first(){return (data.name||"").split(" ")[0];}
+
+/* ---------- saving ---------- */
+function saveLocal(){try{localStorage.setItem(LS,JSON.stringify({data:data,idx:ui.idx}));}catch(e){}}
+var dirty=false,inflight=null,timer=null;
+function touch(){data.updatedAt=new Date().toISOString();saveLocal();dirty=true;
+  if(ui.mode==="server"){setSave("saving");clearTimeout(timer);timer=setTimeout(flush,1200);}else setSave("local");}
+function flush(submit){
+  clearTimeout(timer);
+  if(ui.mode!=="server")return Promise.resolve(false);
+  if(inflight)return inflight.then(function(){return flush(submit);});
+  if(!dirty&&!submit)return Promise.resolve(true);
+  dirty=false;setSave("saving");
+  inflight=fetch("/api/client?c="+encodeURIComponent(CODE),{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({answers:data.answers,submit:!!submit})})
+  .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})
+  .then(function(j){inflight=null;if(j.status)data.status=j.status;saveLocal();if(!dirty)setSave("ok");return true;})
+  .catch(function(){inflight=null;dirty=true;setSave("retry");timer=setTimeout(flush,5000);return false;});
+  return inflight;
+}
+window.addEventListener("pagehide",function(){saveLocal();if(ui.mode==="server"&&dirty&&navigator.sendBeacon){try{navigator.sendBeacon("/api/client?c="+encodeURIComponent(CODE),new Blob([JSON.stringify({answers:data.answers})],{type:"application/json"}));dirty=false;}catch(e){}}});
+function setSave(s){ui.saveState=s;var el=document.getElementById("status");if(el)paintStatus(el);}
+function paintStatus(el){
+  var map={idle:["","Saved"],ok:["ok","Saved"],saving:["saving","Saving…"],local:["local","Saved on this device"],retry:["local","Connection issue. Retrying…"]};
+  var s=ui.mode==="pending"?["","Connecting…"]:(map[ui.saveState]||map.idle);
+  el.className="status "+s[0];el.replaceChildren(h("i"),s[1]);
+}
+
+/* ---------- voice recording (browser speech-to-text) ---------- */
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+var DEV=(function(){var u=navigator.userAgent||"",t=(navigator.maxTouchPoints||0)>1;
+  if(/iPhone|iPad|iPod/.test(u)||(/Macintosh/.test(u)&&t))return "ios";if(/Android/.test(u))return "android";if(/Mac/.test(u))return "mac";if(/Win/.test(u))return "win";return "other";})();
+var KEYBOARD={ios:"You can also tap the microphone on your keyboard.",android:"You can also tap the microphone on your keyboard.",mac:"You can also press the fn key twice to dictate.",win:"You can also press Windows key + H to dictate.",other:"You can also use your keyboard’s dictation."};
+var rec=null;
+function stopRec(){if(rec){rec.want=false;try{rec.r.stop();}catch(e){}}}
+function startRec(ta,btn,interimEl,timeEl,errEl,id){
+  if(!SR)return;
+  errEl.textContent="";
+  var state={want:true,base:ta.value,finals:"",started:Date.now(),tick:null,r:null};
+  rec=state;
+  function joinText(a,b){b=b.trim();if(!b)return a;if(!a.trim())return b.charAt(0).toUpperCase()+b.slice(1);var sep=/\s$/.test(a)?"":" ";if(/[.!?]\s*$/.test(a))b=b.charAt(0).toUpperCase()+b.slice(1);return a+sep+b;}
+  function paint(on){btn.className="rec"+(on?" on":"");btn.replaceChildren(h("span",{class:"dot"},[svg(on?STOP:MIC)]),on?"Stop recording":(ta.value.trim()?"Record more":"Record your answer"));btn.setAttribute("aria-pressed",on?"true":"false");ta.classList.toggle("live",on);timeEl.hidden=!on;}
+  function begin(){
+    var r=new SR();state.r=r;r.lang=navigator.language||"en-US";r.continuous=true;r.interimResults=true;
+    r.onresult=function(e){var interim="";for(var i=e.resultIndex;i<e.results.length;i++){var t=e.results[i][0].transcript;if(e.results[i].isFinal){t=t.trim();if(t)state.finals=state.finals?state.finals+" "+t:t;}else interim+=t;}
+      ta.value=joinText(state.base,state.finals);interimEl.textContent=interim;data.answers[id]=ta.value;touch();};
+    r.onerror=function(e){
+      if(e.error==="not-allowed"||e.error==="service-not-allowed"){state.want=false;errEl.textContent="Microphone access is blocked. Allow the microphone for this site in your browser settings, or type your answer. "+KEYBOARD[DEV];}
+      else if(e.error==="audio-capture"){state.want=false;errEl.textContent="No microphone was found. Check that one is connected, or type your answer.";}
+      else if(e.error==="network"){state.want=false;errEl.textContent="Voice typing needs an internet connection. Try again, or type your answer.";}
+    };
+    r.onend=function(){
+      if(state.want&&rec===state){state.base=ta.value;state.finals="";try{begin();}catch(x){state.want=false;finish();}}
+      else finish();
+    };
+    try{r.start();}catch(x){state.want=false;finish();}
+  }
+  function finish(){clearInterval(state.tick);interimEl.textContent="";if(rec===state)rec=null;paint(false);data.answers[id]=ta.value;touch();}
+  paint(true);
+  state.tick=setInterval(function(){var s=Math.floor((Date.now()-state.started)/1000);timeEl.textContent=Math.floor(s/60)+":"+pad(s%60);},500);
+  timeEl.textContent="0:00";
+  begin();
+}
+
+/* ---------- views ---------- */
+function bar(sub,withRail){
+  return h("header",{class:"bar"},[
+    h("div",{class:"bar-in"},[h("div",{class:"mark"},[h("b",{text:"Channel Onboarding"}),h("span",{class:"label",text:sub})])]),
+    withRail?h("nav",{class:"rail","aria-label":"Questions"},QUESTIONS.map(function(q,i){
+      var has=(data.answers[qid(i)]||"").trim();
+      return h("button",{class:(i===ui.idx&&ui.view==="question"?"cur":has?"done":""),"aria-label":"Question "+(i+1)+(has?", answered":""),title:"Question "+(i+1),onclick:function(){goTo(i);}});
+    })):null
+  ]);
+}
+function renderNoLink(){
+  app.replaceChildren(bar("Onboarding"),h("main",null,[h("div",{class:"col"},[
+    h("span",{class:"label red",text:ui.linkError==="not_found"?"Link not active":"Personal link needed"}),
+    h("h1",{class:"big",text:ui.linkError==="not_found"?"This interview link isn’t active.":"Open your personal interview link."}),
+    h("p",{class:"lede",text:ui.linkError==="not_found"?"It may have been replaced with a new one. Reach out to us and we’ll send you a fresh link.":"Your interview has its own link so your answers save to the right place. Use the link we sent you."})
+  ])]));
+}
+function renderWelcome(){
+  var resumed=answered()>0;
+  function go(){ui.view="question";render();}
+  app.replaceChildren(
+    bar("Before we plan your channel"),
+    h("main",null,[h("div",{class:"col"},[
+      h("span",{class:"label red",text:resumed?"Welcome back":"Onboarding interview"}),
+      h("h1",{class:"big",text:resumed?"Pick up right where you left off.":(first()?"Hi "+first()+". Tell us about your business, in your own words.":"Tell us about your business, in your own words.")}),
+      h("p",{class:"lede",text:"17 questions, one at a time. There are no right or wrong answers. Answer the way you’d explain it to a client; how you say things matters to us as much as what you say."}),
+      h("div",{class:"facts"},[
+        h("div",null,[h("span",{class:"label",text:"Questions"}),h("span",{text:"17"})]),
+        h("div",null,[h("span",{class:"label",text:"Time"}),h("span",{text:"30–45 minutes"})]),
+        h("div",null,[h("span",{class:"label",text:"Progress"}),h("span",{text:answered()+" of "+N+" answered"})])
+      ]),
+      h("div",{class:"talk big-talk"},[h("span",{class:"talk-ic"},[svg(MIC)]),h("div",null,[h("b",{text:"Talk, don’t type"}),h("p",{text:SR?"Each question has a record button. Tap it, talk through your answer, and your words appear as text. Your browser will ask to use your microphone the first time.":"Use your keyboard’s microphone or your computer’s dictation to talk instead of typing. "+KEYBOARD[DEV]})])]),
+      ui.mode==="local"?h("p",{class:"note",text:"We couldn’t reach our server, so your answers are saving on this device for now. They’ll send once the connection is back, as long as you finish on this device."}):
+        h("p",{class:"note",text:"Your answers save automatically as you go, so you can stop and come back to this link any time, on any device."}),
+      h("div",{class:"actions"},[
+        h("button",{class:"btn primary",onclick:go},[resumed?"Continue":"Start the interview",svg(ARROW)]),
+        resumed?h("button",{class:"link",onclick:function(){ui.view="review";render();},text:"Review my answers"}):null
+      ])
+    ])])
+  );
+}
+function renderQuestion(){
+  var i=ui.idx,q=QUESTIONS[i],id=qid(i);
+  var ta=h("textarea",{class:"answer",id:"ans-"+id,"aria-labelledby":"qtext",placeholder:SR?"Tap Record and start talking, or type here…":"Type or dictate your answer…"});
+  ta.value=data.answers[id]||"";
+  ta.addEventListener("input",function(){data.answers[id]=ta.value;touch();});
+  var interimEl=h("p",{class:"interim","aria-live":"polite"}),timeEl=h("span",{class:"rec-time",hidden:true}),errEl=h("p",{class:"rec-err",role:"alert"});
+  var recBtn=null;
+  if(SR){recBtn=h("button",{class:"rec",type:"button","aria-pressed":"false",onclick:function(){if(rec)stopRec();else startRec(ta,recBtn,interimEl,timeEl,errEl,id);}},[h("span",{class:"dot"},[svg(MIC)]),ta.value.trim()?"Record more":"Record your answer"]);}
+  var status=h("span",{class:"status",id:"status",role:"status"});paintStatus(status);
+  app.replaceChildren(
+    bar("Question "+(i+1)+" of "+N,true),
+    h("main",null,[h("div",{class:"col"},[
+      h("div",{class:"qhead"},[h("span",{class:"label red",text:"Question "+pad(i+1)}),h("span",{class:"count",text:pad(i+1)+" / "+N})]),
+      h("h1",{class:"q",id:"qtext",text:q[0]}),
+      q[1]?h("p",{class:"help",text:q[1]}):null,
+      SR?h("div",{class:"recbar"},[recBtn,timeEl,h("p",{class:"rec-hint",text:"Talk as long as you like. You can edit the text afterward. "+KEYBOARD[DEV]})])
+        :h("div",{class:"talk"},[h("span",{class:"talk-ic"},[svg(MIC)]),h("div",null,[h("b",{text:"Talk instead of typing"}),h("p",{text:"Click in the answer box, then use dictation. "+KEYBOARD[DEV]})])]),
+      errEl,
+      ta,
+      interimEl,
+      h("p",{class:"muted",style:"margin:0;font-size:.85rem",text:"Not sure yet? Leave it blank and come back to it later."})
+    ])]),
+    h("div",{class:"dock"},[h("div",{class:"dock-in"},[
+      status,
+      h("button",{class:"btn",onclick:back,text:i===0?"Intro":"Back"}),
+      h("button",{class:"btn primary",onclick:next},[i===N-1?"Review answers":"Next",svg(ARROW)])
+    ])])
+  );
+  if(!SR||DEV==="mac"||DEV==="win"||DEV==="other"){ta.focus({preventScroll:true});ta.setSelectionRange(ta.value.length,ta.value.length);}
+  window.scrollTo(0,0);
+}
+function leave(){stopRec();flush();}
+function goTo(i){leave();ui.idx=i;ui.view="question";saveLocal();render();}
+function next(){leave();if(ui.idx<N-1){ui.idx++;saveLocal();render();}else{ui.view="review";render();}}
+function back(){leave();if(ui.idx>0){ui.idx--;saveLocal();render();}else{ui.view="welcome";render();}}
+
+function renderReview(){
+  var left=N-answered(),submitted=data.status==="submitted";
+  var status=h("span",{class:"status",id:"status",role:"status"});paintStatus(status);
+  app.replaceChildren(
+    bar("Review your answers",true),
+    h("main",null,[h("div",{class:"col"},[
+      h("span",{class:"label red",text:submitted?"Sent":"Almost done"}),
+      h("h1",{class:"big",text:submitted?"Your answers are in.":"Check your answers, then send them."}),
+      h("p",{class:"lede",text:left?("You have "+left+" question"+(left===1?"":"s")+" left blank. You can still send now; we’ll follow up on anything we need."):"Everything’s answered. Edit anything you want to change, then send."}),
+      h("ol",{class:"review"},QUESTIONS.map(function(q,i){
+        var a=(data.answers[qid(i)]||"").trim();
+        return h("li",null,[h("div",{class:"rq"},[h("b",{text:(i+1)+". "+q[0]}),h("button",{class:"link",onclick:function(){goTo(i);},text:a?"Edit":"Answer"})]),
+          a?h("p",{class:"ra",text:a}):h("span",null,[h("span",{class:"chip red",text:"Not answered"})])]);
+      }))
+    ])]),
+    h("div",{class:"dock"},[h("div",{class:"dock-in"},[
+      status,
+      h("button",{class:"btn",onclick:function(){ui.idx=N-1;ui.view="question";render();},text:"Back"}),
+      h("button",{class:"btn primary",id:"sendbtn",onclick:submit},[submitted?"Send updated answers":"Send my answers",svg(ARROW)])
+    ])])
+  );
+  window.scrollTo(0,0);
+}
+function submit(){
+  var b=document.getElementById("sendbtn");if(b){b.disabled=true;}
+  if(ui.mode!=="server"){ui.view="done";render();return;}
+  flush(true).then(function(ok){
+    if(ok){data.status="submitted";data.submittedAt=new Date().toISOString();saveLocal();ui.view="done";render();}
+    else{if(b)b.disabled=false;toast("Couldn’t send just now. Check your connection and try again.");}
+  });
+}
+function exportText(){
+  var out=["# Onboarding interview"+(data.name?": "+data.name:""),""];
+  QUESTIONS.forEach(function(q,i){out.push("## "+(i+1)+". "+q[0]);out.push((data.answers[qid(i)]||"").trim()||"(not answered)");out.push("");});
+  return out.join("\n");
+}
+function renderDone(){
+  var server=ui.mode==="server";
+  app.replaceChildren(
+    bar("Thank you"),
+    h("main",null,[h("div",{class:"col"},[
+      h("span",{class:"label red",text:"Interview complete"}),
+      h("h1",{class:"big",text:"Thank you"+(first()?", "+first():"")+". That’s everything."}),
+      server?h("p",{class:"lede",text:"Your answers have been sent to us. We’ll use them to plan your channel and write scripts that sound like you. If you think of something else, come back to this link and edit your answers any time."})
+            :h("p",{class:"lede",text:"We couldn’t reach our server, so your answers are only saved on this device. Copy them below and send them to us, or reopen this link later to send them."}),
+      h("div",{class:"actions"},[
+        server?null:h("button",{class:"btn primary",onclick:function(){copy(exportText());},text:"Copy my answers"}),
+        h("button",{class:"link",onclick:function(){ui.view="review";render();},text:"Edit my answers"})
+      ])
+    ])])
+  );
+  window.scrollTo(0,0);
+}
+function copy(t){
+  var fb=function(){var ta=h("textarea",{style:"position:fixed;top:0;left:0;opacity:0"});ta.value=t;document.body.appendChild(ta);ta.select();var r=false;try{r=document.execCommand("copy");}catch(e){}ta.remove();toast(r?"Copied":"Select the text and copy it manually");};
+  try{navigator.clipboard.writeText(t).then(function(){toast("Copied");},fb);}catch(e){fb();}
+}
+
+function render(){
+  if(ui.view==="nolink")return renderNoLink();
+  if(ui.view==="question")return renderQuestion();
+  if(ui.view==="review")return renderReview();
+  if(ui.view==="done")return renderDone();
+  return renderWelcome();
+}
+
+/* ---------- boot ---------- */
+if(!/^[a-f0-9]{16}$/.test(CODE)){ui.view="nolink";render();return;}
+render();
+fetch("/api/client?c="+encodeURIComponent(CODE),{cache:"no-store"}).then(function(r){
+  if(r.status===404||r.status===400){ui.view="nolink";ui.linkError="not_found";render();return;}
+  if(!r.ok)throw new Error(r.status);
+  return r.json().then(function(s){
+    ui.mode="server";data.name=s.name||"";
+    var remoteNewer=!data.updatedAt||(s.updatedAt||"")>=data.updatedAt;
+    if(remoteNewer){data.answers=Object.assign({},s.answers||{});data.status=s.status;data.updatedAt=s.updatedAt;data.submittedAt=s.submittedAt;saveLocal();ui.saveState="ok";}
+    else{dirty=true;flush();}
+    var a=document.activeElement;if(a&&a.tagName==="TEXTAREA")setSave(ui.saveState);else render();
+  });
+}).catch(function(){ui.mode="local";ui.saveState="local";var a=document.activeElement;if(a&&a.tagName==="TEXTAREA")setSave("local");else render();});
+})();
+</script>
+</body>
+</html>
